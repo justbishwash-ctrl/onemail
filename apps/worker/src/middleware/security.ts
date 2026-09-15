@@ -8,16 +8,17 @@ export async function secureHeaders(
 ): Promise<void> {
   await next();
 
-  c.res.headers.set('X-Content-Type-Options', 'nosniff');
-  c.res.headers.set('X-Frame-Options', 'DENY');
-  c.res.headers.set('X-XSS-Protection', '1; mode=block');
-  c.res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  c.res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  c.res.headers.set(
+  const response = new Response(c.res.body, c.res);
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  response.headers.set(
     'Strict-Transport-Security',
     'max-age=63072000; includeSubDomains; preload'
   );
-  c.res.headers.set(
+  response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
@@ -30,6 +31,7 @@ export async function secureHeaders(
       "base-uri 'self'",
     ].join('; ')
   );
+  c.res = response;
 }
 
 export async function corsHeaders(
@@ -59,9 +61,11 @@ export async function corsHeaders(
   await next();
 
   if (origin && allowedOrigins.includes(origin)) {
-    c.res.headers.set('Access-Control-Allow-Origin', origin);
-    c.res.headers.set('Access-Control-Allow-Credentials', 'true');
-    c.res.headers.set('Vary', 'Origin');
+    const response = new Response(c.res.body, c.res);
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Vary', 'Origin');
+    c.res = response;
   }
 }
 
