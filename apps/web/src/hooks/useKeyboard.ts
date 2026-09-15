@@ -17,6 +17,7 @@ const shortcuts: Record<string, string> = {
   s: 'Star/Unstar',
   'Shift+i': 'Mark as read',
   'Shift+u': 'Mark as unread',
+  Delete: 'Delete selected emails',
   Escape: 'Close / go back',
 };
 

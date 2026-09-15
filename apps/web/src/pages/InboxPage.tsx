@@ -220,6 +220,9 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const handleBulkTrash = useCallback(async () => {
     if (selectedThreadIds.length === 0) return;
     const idsToDelete = [...selectedThreadIds];
+    const selectionLabel = `${idsToDelete.length} email${idsToDelete.length === 1 ? '' : 's'}`;
+    if (!window.confirm(`Do you want to delete ${selectionLabel}?`)) return;
+
     setBulkDeleting(true);
     setBulkDeleteProgress(0);
     const deletedIds: string[] = [];
@@ -289,6 +292,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
       if (activeThread) handleStar(activeThread.id, !activeThread.isStarred);
     },
     Escape: () => { setActiveThreadId(null); setActiveThread(null); },
+    Delete: () => { void handleBulkTrash(); },
     'Shift+i': () => { if (activeThreadId) threadsApi.markRead(activeThreadId); },
     'Shift+u': () => { if (activeThreadId) threadsApi.markUnread(activeThreadId); },
   });
@@ -371,8 +375,8 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
                   <button
                     onClick={handleBulkTrash}
                     disabled={bulkDeleting}
-                    title="Move selected conversations to trash"
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
+                    title="Delete selected emails"
+                    className="flex items-center gap-1.5 rounded-md border border-destructive/60 px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {bulkDeleting ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                     {bulkDeleting ? `Deleting ${bulkDeleteProgress}/${selectedThreadIds.length}` : `Delete ${selectedThreadIds.length}`}
