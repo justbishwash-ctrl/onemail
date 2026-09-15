@@ -68,6 +68,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const [deletingThreadIds, setDeletingThreadIds] = useState<string[]>([]);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const loadingMoreRef = useRef(false);
@@ -220,9 +221,8 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const handleBulkTrash = useCallback(async () => {
     if (selectedThreadIds.length === 0) return;
     const idsToDelete = [...selectedThreadIds];
-    const selectionLabel = `${idsToDelete.length} email${idsToDelete.length === 1 ? '' : 's'}`;
-    if (!window.confirm(`Do you want to delete ${selectionLabel}?`)) return;
 
+    setBulkDeleteConfirmOpen(false);
     setBulkDeleting(true);
     setBulkDeleteProgress(0);
     const deletedIds: string[] = [];
@@ -291,11 +291,16 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
     s: () => {
       if (activeThread) handleStar(activeThread.id, !activeThread.isStarred);
     },
-    Escape: () => { setActiveThreadId(null); setActiveThread(null); },
-    Delete: () => { void handleBulkTrash(); },
+    Escape: () => {
+      if (bulkDeleteConfirmOpen) setBulkDeleteConfirmOpen(false);
+      else { setActiveThreadId(null); setActiveThread(null); }
+    },
+    Delete: () => { if (selectedThreadIds.length > 0 && !bulkDeleting) setBulkDeleteConfirmOpen(true); },
     'Shift+i': () => { if (activeThreadId) threadsApi.markRead(activeThreadId); },
     'Shift+u': () => { if (activeThreadId) threadsApi.markUnread(activeThreadId); },
   });
+
+  const selectedEmailLabel = `${selectedThreadIds.length} email${selectedThreadIds.length === 1 ? '' : 's'}`;
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -408,7 +413,6 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
             <MessagePane
               thread={activeThread}
               loading={threadLoading}
-              copyRecipientAddress={gmailLabel === 'SENT'}
               onArchive={dismissThread}
               onTrash={dismissThread}
               onClose={() => { setActiveThreadId(null); setActiveThread(null); }}
@@ -417,6 +421,31 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
           )}
         </div>
       </div>
+
+      {bulkDeleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-title">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-xl">
+            <h2 id="bulk-delete-title" className="text-base font-semibold text-foreground">Delete {selectedEmailLabel}?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Do you want to delete {selectedEmailLabel}?</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setBulkDeleteConfirmOpen(false)}
+                className="rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleBulkTrash()}
+                className="rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground hover:opacity-90"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
