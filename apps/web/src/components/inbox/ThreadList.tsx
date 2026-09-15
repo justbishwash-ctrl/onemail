@@ -192,36 +192,40 @@ function ThreadRow({ thread, isActive, onSelect, onStar, onTrash, selected, onTo
           <p className="text-xs text-muted-foreground truncate">
             {truncate(thread.snippet, 80)}
           </p>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onStar(thread.id, !thread.isStarred);
-            }}
-            className={cn(
-              'ml-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
-              thread.isStarred && 'opacity-100'
-            )}
-          >
-            <Star
+          <div className="ml-3 shrink-0 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onStar(thread.id, !thread.isStarred);
+              }}
+              title={thread.isStarred ? 'Unstar' : 'Star'}
+              aria-label={thread.isStarred ? 'Unstar' : 'Star'}
               className={cn(
-                'w-3.5 h-3.5',
-                thread.isStarred
-                  ? 'fill-amber-400 text-amber-400'
-                  : 'text-muted-foreground hover:text-amber-400'
+                'p-1 rounded hover:bg-accent',
+                thread.isStarred && 'opacity-100'
               )}
-            />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onTrash(thread.id);
-            }}
-            title="Move to trash"
-            aria-label={`Move ${thread.subject || 'conversation'} to trash`}
-            className="ml-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-          >
-            {deleting ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-          </button>
+            >
+              <Star
+                className={cn(
+                  'w-3.5 h-3.5',
+                  thread.isStarred
+                    ? 'fill-amber-400 text-amber-400'
+                    : 'text-muted-foreground hover:text-amber-400'
+                )}
+              />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTrash(thread.id);
+              }}
+              title="Move to trash"
+              aria-label={`Move ${thread.subject || 'conversation'} to trash`}
+              className="p-1 rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+            >
+              {deleting ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </div>
       </div>
     </button>

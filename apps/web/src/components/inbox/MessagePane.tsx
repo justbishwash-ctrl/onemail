@@ -168,16 +168,38 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       {/* Message header */}
-      <button
+      <div
         onClick={() => setExpanded((e) => !e)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') setExpanded((e) => !e);
+        }}
+        role="button"
+        tabIndex={0}
         className="w-full flex items-start gap-3 p-4 hover:bg-accent/30 transition-colors text-left"
       >
         <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-0.5">
-            <span className="text-sm font-medium text-foreground">{senderName}</span>
+          <div className="flex items-start justify-between mb-0.5">
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-foreground">{senderName}</span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="truncate">{senderEmail}</span>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    copySenderEmail();
+                  }}
+                  title="Copy sender email"
+                  aria-label="Copy sender email"
+                  className="shrink-0 p-0.5 rounded hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                </button>
+              </div>
+            </div>
             <div className="flex items-center gap-1.5">
               {message.attachments.length > 0 && (
                 <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
@@ -200,24 +222,12 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
             </p>
           )}
         </div>
-      </button>
+      </div>
 
       {/* Message body */}
       {expanded && (
         <div className="border-t border-border">
           <div className="px-4 py-4">
-            <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
-              <span className="truncate">{senderEmail}</span>
-              <button
-                type="button"
-                onClick={copySenderEmail}
-                title="Copy sender email"
-                aria-label="Copy sender email"
-                className="shrink-0 p-1 rounded hover:bg-accent hover:text-foreground transition-colors"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
             {message.htmlBody ? (
               <EmailBody html={message.htmlBody} />
             ) : (
