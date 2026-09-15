@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify';
 import {
   Archive, Trash2, Reply, ReplyAll, Forward,
   Star, Paperclip, ChevronDown, ChevronUp, Download, Printer, X, Copy, Check, BadgeCheck,
-  FileText, Image, Video, Music
+  FileText, Image, Video, Music, Loader2
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { formatFullDate, extractDisplayName, extractEmailAddress, formatFileSize, getInitials, isVerifiedGovernmentSender } from '../../utils/format';
@@ -232,8 +232,7 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
           )}
           {expanded && (
             <p className="text-xs text-muted-foreground">
-              To: {message.to.map(extractDisplayName).join('; ')}
-              {message.cc.length > 0 && `; cc ${message.cc.map(extractDisplayName).join('; ')}`}
+              {message.cc.length > 0 ? `cc: ${message.cc.map(extractDisplayName).join('; ')}` : 'Recipients shown above'}
             </p>
           )}
         </div>
@@ -380,6 +379,8 @@ function AttachmentViewer({
       });
   }
 
+      const [loaded, setLoaded] = useState(previewType === 'unsupported');
+      const [loadError, setLoadError] = useState(false);
   function print() {
     if (!printable) return;
     const printWindow = window.open('', '_blank', 'noopener,noreferrer');
@@ -420,12 +421,14 @@ function AttachmentViewer({
             </ActionButton>
           </div>
         </div>
-        <div className="flex min-h-[280px] flex-1 items-center justify-center overflow-auto bg-muted/20 p-4">
-          {previewType === 'image' && <img src={url} alt={attachment.filename} className="max-h-[70vh] max-w-full object-contain" />}
-          {previewType === 'pdf' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full" />}
-          {previewType === 'video' && <video src={url} controls className="max-h-[70vh] max-w-full" />}
-          {previewType === 'audio' && <audio src={url} controls className="w-full max-w-lg" />}
-          {previewType === 'text' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full bg-background" />}
+        <div className="relative flex min-h-[280px] flex-1 items-center justify-center overflow-auto bg-muted/20 p-4">
+          {!loaded && !loadError && <Loader2 className="absolute h-7 w-7 animate-spin text-muted-foreground" />}
+          {loadError && <p className="text-sm text-destructive">This attachment could not be previewed. Use download instead.</p>}
+          {previewType === 'image' && !loadError && <img src={url} alt={attachment.filename} onLoad={() => setLoaded(true)} onError={() => setLoadError(true)} className={cn('max-h-[70vh] max-w-full object-contain', !loaded && 'invisible')} />}
+          {previewType === 'pdf' && !loadError && <iframe src={url} title={attachment.filename} onLoad={() => setLoaded(true)} className={cn('h-[70vh] w-full', !loaded && 'invisible')} />}
+          {previewType === 'video' && !loadError && <video src={url} controls onLoadedData={() => setLoaded(true)} onError={() => setLoadError(true)} className={cn('max-h-[70vh] max-w-full', !loaded && 'invisible')} />}
+          {previewType === 'audio' && !loadError && <audio src={url} controls onLoadedData={() => setLoaded(true)} onError={() => setLoadError(true)} className={cn('w-full max-w-lg', !loaded && 'invisible')} />}
+          {previewType === 'text' && !loadError && <iframe src={url} title={attachment.filename} onLoad={() => setLoaded(true)} className={cn('h-[70vh] w-full bg-background', !loaded && 'invisible')} />}
           {previewType === 'unsupported' && (
             <div className="text-center">
               <FileText className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
