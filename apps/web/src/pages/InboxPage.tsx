@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Search, X, Menu } from 'lucide-react';
+import { Search, X, Menu, Trash2, LoaderCircle } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import ThreadList from '../components/inbox/ThreadList';
 import MessagePane from '../components/inbox/MessagePane';
@@ -61,6 +61,9 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const [labelUnread, setLabelUnread] = useState<Record<string, number>>({});
   const [searchInput, setSearchInput] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [selectedThreadIds, setSelectedThreadIds] = useState<string[]>([]);
+  const [deletingThreadIds, setDeletingThreadIds] = useState<string[]>([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const activeIndex = threads.findIndex((t) => t.id === activeThreadId);
@@ -111,6 +114,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
       if (reset) {
         setActiveThreadId(null);
         setActiveThread(null);
+        setSelectedThreadIds([]);
       }
     } catch {
       addToast('Failed to load messages', 'error');
@@ -164,6 +168,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   }, []);
 
   const handleTrash = useCallback(async (threadId: string) => {
+    setDeletingThreadIds((ids) => [...ids, threadId]);
     try {
       await threadsApi.trash(threadId);
       setThreads((prev) => prev.filter((thread) => thread.id !== threadId));
@@ -175,8 +180,29 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
       addToast('Moved to trash', 'success');
     } catch {
       addToast('Failed to move message to trash', 'error');
+    } finally {
+      setDeletingThreadIds((ids) => ids.filter((id) => id !== threadId));
     }
   }, [activeThreadId, cacheKey]);
+
+  const handleBulkTrash = useCallback(async () => {
+    if (selectedThreadIds.length === 0) return;
+    setBulkDeleting(true);
+    const results = await Promise.allSettled(selectedThreadIds.map((id) => threadsApi.trash(id)));
+    const deletedIds = selectedThreadIds.filter((_, index) => results[index].status === 'fulfilled');
+    if (deletedIds.length > 0) {
+      setThreads((current) => current.filter((thread) => !deletedIds.includes(thread.id)));
+      threadCache.delete(cacheKey);
+    }
+    setSelectedThreadIds([]);
+    setBulkDeleting(false);
+    addToast(
+      deletedIds.length === selectedThreadIds.length
+        ? `${deletedIds.length} conversations moved to trash`
+        : `${deletedIds.length} deleted; some failed`,
+      deletedIds.length === selectedThreadIds.length ? 'success' : 'error'
+    );
+  }, [cacheKey, selectedThreadIds]);
 
   // Search submit
   const handleSearch = useCallback(async (q: string) => {
@@ -285,12 +311,32 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
           <div className={`flex flex-col border-r border-border ${activeThread ? 'w-80 shrink-0' : 'flex-1'}`}>
             {/* Folder title */}
             <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
-              <h1 className="text-sm font-semibold text-foreground capitalize">
-                {isSearchMode ? `Results for "${searchQuery}"` : folder}
-              </h1>
-              {loading && (
-                <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              )}
+              <div className="flex items-center gap-2 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={threads.length > 0 && selectedThreadIds.length === threads.length}
+                  onChange={(event) => setSelectedThreadIds(event.target.checked ? threads.map((thread) => thread.id) : [])}
+                  aria-label="Select all conversations"
+                  className="h-3.5 w-3.5 accent-primary"
+                />
+                <h1 className="text-sm font-semibold text-foreground capitalize truncate">
+                  {isSearchMode ? `Results for "${searchQuery}"` : folder}
+                </h1>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                {selectedThreadIds.length > 0 && (
+                  <button
+                    onClick={handleBulkTrash}
+                    disabled={bulkDeleting}
+                    title="Move selected conversations to trash"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
+                  >
+                    {bulkDeleting ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    {bulkDeleting ? 'Deleting...' : `Delete ${selectedThreadIds.length}`}
+                  </button>
+                )}
+                {loading && <LoaderCircle className="w-3.5 h-3.5 animate-spin text-primary" />}
+              </div>
             </div>
 
             <ThreadList
@@ -299,6 +345,9 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
               onSelect={openThread}
               onStar={handleStar}
               onTrash={handleTrash}
+              selectedIds={selectedThreadIds}
+              onToggleSelect={(threadId) => setSelectedThreadIds((ids) => ids.includes(threadId) ? ids.filter((id) => id !== threadId) : [...ids, threadId])}
+              deletingIds={deletingThreadIds}
               loading={loading}
             />
 

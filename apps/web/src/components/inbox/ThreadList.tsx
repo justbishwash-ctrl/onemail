@@ -1,4 +1,4 @@
-import { Star, Paperclip, Trash2 } from 'lucide-react';
+import { Star, Paperclip, Trash2, LoaderCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import {
   formatEmailDate,
@@ -14,6 +14,9 @@ interface ThreadListProps {
   onSelect: (thread: ParsedThread) => void;
   onStar: (threadId: string, starred: boolean) => void;
   onTrash: (threadId: string) => void;
+  selectedIds: string[];
+  onToggleSelect: (threadId: string) => void;
+  deletingIds: string[];
   loading?: boolean;
 }
 
@@ -23,6 +26,9 @@ export default function ThreadList({
   onSelect,
   onStar,
   onTrash,
+  selectedIds,
+  onToggleSelect,
+  deletingIds,
   loading,
 }: ThreadListProps) {
   if (loading && threads.length === 0) {
@@ -55,6 +61,9 @@ export default function ThreadList({
           onSelect={onSelect}
           onStar={onStar}
           onTrash={onTrash}
+          selected={selectedIds.includes(thread.id)}
+          onToggleSelect={onToggleSelect}
+          deleting={deletingIds.includes(thread.id)}
         />
       ))}
     </div>
@@ -67,9 +76,12 @@ interface ThreadRowProps {
   onSelect: (thread: ParsedThread) => void;
   onStar: (threadId: string, starred: boolean) => void;
   onTrash: (threadId: string) => void;
+  selected: boolean;
+  onToggleSelect: (threadId: string) => void;
+  deleting: boolean;
 }
 
-function ThreadRow({ thread, isActive, onSelect, onStar, onTrash }: ThreadRowProps) {
+function ThreadRow({ thread, isActive, onSelect, onStar, onTrash, selected, onToggleSelect, deleting }: ThreadRowProps) {
   const lastMessage = thread.messages[thread.messages.length - 1];
   const senderName = extractDisplayName(lastMessage?.from ?? '');
   const initials = getInitials(senderName);
@@ -83,6 +95,15 @@ function ThreadRow({ thread, isActive, onSelect, onStar, onTrash }: ThreadRowPro
         thread.isUnread && !isActive && 'bg-background'
       )}
     >
+      <input
+        type="checkbox"
+        checked={selected}
+        disabled={deleting}
+        onChange={() => onToggleSelect(thread.id)}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Select ${thread.subject || 'conversation'}`}
+        className="mt-2 h-3.5 w-3.5 shrink-0 accent-primary"
+      />
       {/* Avatar */}
       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0 mt-0.5">
         {initials}
@@ -139,7 +160,7 @@ function ThreadRow({ thread, isActive, onSelect, onStar, onTrash }: ThreadRowPro
               onStar(thread.id, !thread.isStarred);
             }}
             className={cn(
-              'ml-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
+              'ml-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
               thread.isStarred && 'opacity-100'
             )}
           >
@@ -159,9 +180,9 @@ function ThreadRow({ thread, isActive, onSelect, onStar, onTrash }: ThreadRowPro
             }}
             title="Move to trash"
             aria-label={`Move ${thread.subject || 'conversation'} to trash`}
-            className="ml-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+            className="ml-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            {deleting ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
