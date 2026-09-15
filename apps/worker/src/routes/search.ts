@@ -22,13 +22,13 @@ search.get('/', requireAuth, async (c) => {
   const response = await searchThreads(accessToken, q.trim(), maxResults, pageToken);
 
   const threadIds = (response.threads ?? []).map((t) => t.id);
-  const BATCH = 10;
+  const BATCH = 5;
   const parsed = [];
 
   for (let i = 0; i < threadIds.length; i += BATCH) {
     const batch = threadIds.slice(i, i + BATCH);
     const results = await Promise.allSettled(
-      batch.map((id) => getThread(accessToken, id).then(parseThread))
+      batch.map((id) => getThread(accessToken, id, 'metadata').then((thread) => parseThread(thread, false)))
     );
     for (const r of results) {
       if (r.status === 'fulfilled') parsed.push(r.value);

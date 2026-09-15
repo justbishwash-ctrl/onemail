@@ -58,6 +58,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const [threads, setThreads] = useState<ParsedThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [threadLoading, setThreadLoading] = useState(false);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [labels, setLabels] = useState<GmailLabel[]>([]);
   const [labelUnread, setLabelUnread] = useState<Record<string, number>>({});
@@ -139,6 +140,11 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const openThread = useCallback(async (thread: ParsedThread) => {
     setActiveThreadId(thread.id);
     setActiveThread(thread);
+    if (thread.detailsLoaded) {
+      setThreadLoading(false);
+      return;
+    }
+    setThreadLoading(true);
 
     if (thread.isUnread) {
       try {
@@ -154,7 +160,24 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
         // non-critical
       }
     }
-  }, []);
+
+    try {
+      const fullThread = await threadsApi.get(thread.id);
+      setActiveThread(fullThread);
+      setThreads((current) => current.map((item) => item.id === thread.id ? fullThread : item));
+      const cached = threadCache.get(cacheKey);
+      if (cached) {
+        threadCache.set(cacheKey, {
+          ...cached,
+          threads: cached.threads.map((item) => item.id === thread.id ? fullThread : item),
+        });
+      }
+    } catch {
+      addToast('Failed to load conversation', 'error');
+    } finally {
+      setThreadLoading(false);
+    }
+  }, [cacheKey]);
 
   // Remove thread from list (after archive/trash)
   const dismissThread = useCallback(() => {
@@ -377,6 +400,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
           {activeThread && (
             <MessagePane
               thread={activeThread}
+              loading={threadLoading}
               onArchive={dismissThread}
               onTrash={dismissThread}
               onClose={() => { setActiveThreadId(null); setActiveThread(null); }}

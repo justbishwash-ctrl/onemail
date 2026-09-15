@@ -120,4 +120,5 @@ export interface ParsedThread {
   isStarred: boolean;
   hasAttachments: boolean;
   messageCount: number;
+  detailsLoaded?: boolean;
 }

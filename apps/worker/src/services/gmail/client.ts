@@ -24,14 +24,23 @@ async function gmailFetch<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  const res = await fetch(`${GMAIL_BASE}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      ...(options?.headers ?? {}),
-    },
-  });
+  let res: Response;
+  for (let attempt = 0; ; attempt++) {
+    res = await fetch(`${GMAIL_BASE}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...(options?.headers ?? {}),
+      },
+    });
+    if (res.ok || ![429, 500, 502, 503, 504].includes(res.status) || attempt >= 2) break;
+    const retryAfter = Number(res.headers.get('Retry-After'));
+    const delay = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : 250 * 2 ** attempt;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
 
   if (!res.ok) {
     const body = await res.text();
@@ -89,8 +98,18 @@ export async function listThreads(
   return gmailFetch(accessToken, `/threads?${qs.toString()}`);
 }
 
-export async function getThread(accessToken: string, threadId: string): Promise<GmailThread> {
-  return gmailFetch(accessToken, `/threads/${encodeURIComponent(threadId)}?format=full`);
+export async function getThread(
+  accessToken: string,
+  threadId: string,
+  format: 'full' | 'metadata' = 'full'
+): Promise<GmailThread> {
+  const qs = new URLSearchParams({ format });
+  if (format === 'metadata') {
+    for (const header of ['Subject', 'From', 'To', 'Cc', 'Date']) {
+      qs.append('metadataHeaders', header);
+    }
+  }
+  return gmailFetch(accessToken, `/threads/${encodeURIComponent(threadId)}?${qs.toString()}`);
 }
 
 export async function modifyThread(
@@ -288,7 +307,7 @@ export function parseMessage(raw: GmailMessage): ParsedMessage {
   };
 }
 
-export function parseThread(raw: GmailThread): ParsedThread {
+export function parseThread(raw: GmailThread, detailsLoaded = true): ParsedThread {
   const messages = (raw.messages ?? []).map(parseMessage);
   const last = messages[messages.length - 1];
 
@@ -309,6 +328,7 @@ export function parseThread(raw: GmailThread): ParsedThread {
     isStarred: messages.some((m) => m.isStarred),
     hasAttachments: messages.some((m) => m.attachments.length > 0),
     messageCount: messages.length,
+    detailsLoaded,
   };
 }
 

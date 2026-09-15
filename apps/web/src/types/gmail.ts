@@ -47,6 +47,7 @@ export interface ParsedThread {
   isStarred: boolean;
   hasAttachments: boolean;
   messageCount: number;
+  detailsLoaded?: boolean;
 }
 
 export interface GmailSendRequest {

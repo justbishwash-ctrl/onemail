@@ -12,13 +12,14 @@ import type { ParsedThread, ParsedMessage } from '../../types/gmail';
 
 interface MessagePaneProps {
   thread: ParsedThread | null;
+  loading?: boolean;
   onArchive: () => void;
   onTrash: () => void;
   onClose: () => void;
   onRefresh: () => void;
 }
 
-export default function MessagePane({ thread, onArchive, onTrash, onClose, onRefresh }: MessagePaneProps) {
+export default function MessagePane({ thread, loading = false, onArchive, onTrash, onClose, onRefresh }: MessagePaneProps) {
   const { openCompose, addToast } = useStore((s) => ({
     openCompose: s.openCompose,
     addToast: s.addToast,
@@ -108,6 +109,12 @@ export default function MessagePane({ thread, onArchive, onTrash, onClose, onRef
       </div>
 
       {/* Messages */}
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          Loading conversation...
+        </div>
+      ) : (
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {thread.messages.map((msg, i) => (
           <MessageCard
@@ -120,6 +127,7 @@ export default function MessagePane({ thread, onArchive, onTrash, onClose, onRef
           />
         ))}
       </div>
+      )}
     </div>
   );
 }

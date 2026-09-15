@@ -31,15 +31,15 @@ threads.get('/', requireAuth, async (c) => {
       pageToken: pageToken || undefined,
     });
 
-    // Fetch thread details in parallel (batched to avoid rate limits)
+    // Fetch metadata only for the list; full bodies load when a thread opens.
     const threadIds = (response.threads ?? []).map((t) => t.id);
-    const BATCH = 10;
+    const BATCH = 5;
     const parsed = [];
 
     for (let i = 0; i < threadIds.length; i += BATCH) {
       const batch = threadIds.slice(i, i + BATCH);
       const results = await Promise.allSettled(
-        batch.map((id) => getThread(accessToken, id).then(parseThread))
+        batch.map((id) => getThread(accessToken, id, 'metadata').then((thread) => parseThread(thread, false)))
       );
       for (const r of results) {
         if (r.status === 'fulfilled') parsed.push(r.value);
