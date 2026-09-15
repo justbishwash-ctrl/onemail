@@ -20,6 +20,8 @@ interface ThreadListProps {
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 }
 
 export default function ThreadList({
@@ -34,6 +36,8 @@ export default function ThreadList({
   loading,
   error,
   onRetry,
+  onLoadMore,
+  hasMore,
 }: ThreadListProps) {
   if (loading && threads.length === 0) {
     return (
@@ -72,7 +76,15 @@ export default function ThreadList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div
+      className="flex-1 overflow-y-auto"
+      onScroll={(event) => {
+        const element = event.currentTarget;
+        if (hasMore && !loading && element.scrollHeight - element.scrollTop - element.clientHeight < 120) {
+          onLoadMore?.();
+        }
+      }}
+    >
       {threads.map((thread) => (
         <ThreadRow
           key={thread.id}
@@ -86,6 +98,12 @@ export default function ThreadList({
           deleting={deletingIds.includes(thread.id)}
         />
       ))}
+      {loading && threads.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">
+          <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
+          Loading more messages...
+        </div>
+      )}
     </div>
   );
 }

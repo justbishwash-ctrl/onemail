@@ -19,6 +19,7 @@ const PATH_TO_LABEL: Record<string, string> = {
   spam:    'SPAM',
   trash:   'TRASH',
 };
+const THREAD_PAGE_SIZE = 15;
 
 const threadCache = new Map<string, {
   threads: ParsedThread[];
@@ -102,17 +103,16 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
       const token = reset ? undefined : nextPageToken ?? undefined;
       const res = isSearchMode && searchQuery
         ? await searchApi.search(searchQuery, token)
-        : await threadsApi.list({ label: gmailLabel, pageToken: token });
+        : await threadsApi.list({ label: gmailLabel, pageToken: token, maxResults: THREAD_PAGE_SIZE });
 
-      setThreads((prev) => reset ? res.threads : [...prev, ...res.threads]);
+      const combinedThreads = reset ? res.threads : [...threads, ...res.threads];
+      setThreads(combinedThreads);
       setNextPageToken(res.nextPageToken);
 
-      if (reset) {
-        threadCache.set(cacheKey, {
-          threads: res.threads,
+      threadCache.set(cacheKey, {
+          threads: combinedThreads,
           nextPageToken: res.nextPageToken,
-        });
-      }
+      });
 
       if (reset) {
         setActiveThreadId(null);
@@ -125,7 +125,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
     } finally {
       setLoading(false);
     }
-  }, [cacheKey, gmailLabel, isSearchMode, searchQuery, nextPageToken]);
+  }, [cacheKey, gmailLabel, isSearchMode, searchQuery, nextPageToken, threads]);
 
   useEffect(() => {
     loadThreads(true);
@@ -364,17 +364,9 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
               onToggleSelect={(threadId) => setSelectedThreadIds((ids) => ids.includes(threadId) ? ids.filter((id) => id !== threadId) : [...ids, threadId])}
               deletingIds={deletingThreadIds}
               loading={loading}
+              onLoadMore={() => loadThreads(false)}
+              hasMore={Boolean(nextPageToken)}
             />
-
-            {/* Load more */}
-            {nextPageToken && !loading && (
-              <button
-                onClick={() => loadThreads(false)}
-                className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground border-t border-border transition-colors"
-              >
-                Load more
-              </button>
-            )}
           </div>
 
           {/* Message pane */}
