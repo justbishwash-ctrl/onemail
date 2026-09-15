@@ -114,6 +114,10 @@ export const threadsApi = {
 // ── Messages ───────────────────────────────────────────────
 
 export const messagesApi = {
+  getAttachmentUrl: (messageId: string, attachmentId: string, mimeType: string, filename: string) => {
+    const query = new URLSearchParams({ mimeType, filename });
+    return `${BASE}/messages/${messageId}/attachment/${attachmentId}?${query}`;
+  },
   get: (id: string) => apiFetch<ParsedMessage>(`/messages/${id}`),
   send: (data: GmailSendRequest & { trackingEnabled?: boolean }) =>
     apiFetch<{ id: string; threadId: string }>('/messages/send', {

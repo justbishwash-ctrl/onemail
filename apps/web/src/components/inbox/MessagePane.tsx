@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DOMPurify from 'dompurify';
 import {
   Archive, Trash2, Reply, ReplyAll, Forward,
   Star, Paperclip, ChevronDown, ChevronUp, Download, Printer, X, Copy, Check, BadgeCheck,
-  FileText, Image, Video, Music, Loader2
+  FileText, Image, Video, Music
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { formatFullDate, extractDisplayName, extractEmailAddress, formatFileSize, getInitials, isVerifiedGovernmentSender } from '../../utils/format';
@@ -162,7 +162,7 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
   const senderName = extractDisplayName(message.from);
   const senderEmail = extractEmailAddress(message.from);
   const verifiedSender = isVerifiedGovernmentSender(message.from);
-  const recipientEmails = message.to.map(extractEmailAddress).join(', ');
+  const recipientEmails = message.to.map(extractEmailAddress).join('; ');
   const copyValue = copyRecipientAddress ? recipientEmails : senderEmail;
   const copyLabel = copyRecipientAddress ? 'recipient address' : 'sender email';
   const initials = getInitials(senderName);
@@ -194,8 +194,10 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
                   </span>
                 )}
               </span>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="truncate">{copyRecipientAddress ? recipientEmails : senderEmail}</span>
+              <div className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
+                <span className="truncate">From: {senderEmail}</span>
+                <span aria-hidden="true">;</span>
+                <span className="truncate">To: {recipientEmails}</span>
                 <button
                   type="button"
                   onClick={(event) => {
@@ -230,8 +232,8 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
           )}
           {expanded && (
             <p className="text-xs text-muted-foreground">
-              to {message.to.map(extractDisplayName).join(', ')}
-              {message.cc.length > 0 && `, cc ${message.cc.map(extractDisplayName).join(', ')}`}
+              To: {message.to.map(extractDisplayName).join('; ')}
+              {message.cc.length > 0 && `; cc ${message.cc.map(extractDisplayName).join('; ')}`}
             </p>
           )}
         </div>
@@ -356,42 +358,30 @@ function AttachmentViewer({
   attachment: ParsedMessage['attachments'][number];
   onClose: () => void;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    let objectUrl: string | null = null;
-
-    messagesApi.getAttachment(messageId, attachment.attachmentId, attachment.mimeType, attachment.filename)
-      .then((blob) => {
-        if (!active) return;
-        objectUrl = URL.createObjectURL(blob);
-        setUrl(objectUrl);
-      })
-      .catch(() => {
-        if (active) setError('This attachment could not be loaded.');
-      });
-
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [attachment.attachmentId, attachment.mimeType, messageId]);
+  const url = messagesApi.getAttachmentUrl(
+    messageId,
+    attachment.attachmentId,
+    attachment.mimeType,
+    attachment.filename
+  );
 
   const previewType = getPreviewType(attachment.mimeType);
   const printable = previewType === 'image' || previewType === 'pdf' || previewType === 'text';
 
   function download() {
-    if (!url) return;
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = attachment.filename;
-    link.click();
+    messagesApi.getAttachment(messageId, attachment.attachmentId, attachment.mimeType, attachment.filename)
+      .then((blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = attachment.filename;
+        link.click();
+        URL.revokeObjectURL(objectUrl);
+      });
   }
 
   function print() {
-    if (!url || !printable) return;
+    if (!printable) return;
     const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) return;
     const content = previewType === 'image'
@@ -417,11 +407,11 @@ function AttachmentViewer({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <ActionButton onClick={download} title="Download" disabled={!url}>
+            <ActionButton onClick={download} title="Download">
               <Download className="w-4 h-4" />
             </ActionButton>
             {printable && (
-              <ActionButton onClick={print} title="Print" disabled={!url}>
+              <ActionButton onClick={print} title="Print">
                 <Printer className="w-4 h-4" />
               </ActionButton>
             )}
@@ -431,14 +421,12 @@ function AttachmentViewer({
           </div>
         </div>
         <div className="flex min-h-[280px] flex-1 items-center justify-center overflow-auto bg-muted/20 p-4">
-          {!url && !error && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {url && previewType === 'image' && <img src={url} alt={attachment.filename} className="max-h-[70vh] max-w-full object-contain" />}
-          {url && previewType === 'pdf' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full" />}
-          {url && previewType === 'video' && <video src={url} controls className="max-h-[70vh] max-w-full" />}
-          {url && previewType === 'audio' && <audio src={url} controls className="w-full max-w-lg" />}
-          {url && previewType === 'text' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full bg-background" />}
-          {url && previewType === 'unsupported' && (
+          {previewType === 'image' && <img src={url} alt={attachment.filename} className="max-h-[70vh] max-w-full object-contain" />}
+          {previewType === 'pdf' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full" />}
+          {previewType === 'video' && <video src={url} controls className="max-h-[70vh] max-w-full" />}
+          {previewType === 'audio' && <audio src={url} controls className="w-full max-w-lg" />}
+          {previewType === 'text' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full bg-background" />}
+          {previewType === 'unsupported' && (
             <div className="text-center">
               <FileText className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">Preview is unavailable for this file type.</p>
