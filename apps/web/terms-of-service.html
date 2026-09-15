@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="OneMail Terms of Service" />
+  <title>Terms of Service — OneMail</title>
+
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #111113;
+      --border: #27272a;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --accent: #8b5cf6;
+      --accent-light: #a78bfa;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(
+          circle at 50% -10%,
+          rgba(139, 92, 246, 0.18),
+          transparent 40%
+        ),
+        var(--bg);
+      color: var(--text);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      line-height: 1.7;
+    }
+
+    a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: min(900px, calc(100% - 40px));
+      margin: auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 60px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 21px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .brand:hover {
+      text-decoration: none;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      font-weight: 800;
+    }
+
+    .back {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      background: rgba(24, 24, 27, 0.7);
+      font-size: 14px;
+    }
+
+    .back:hover {
+      color: var(--text);
+      text-decoration: none;
+      border-color: #3f3f46;
+    }
+
+    .hero {
+      margin-bottom: 30px;
+    }
+
+    .eyebrow {
+      color: var(--accent-light);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 8px 0 12px;
+      font-size: clamp(36px, 6vw, 54px);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .date {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    main {
+      padding: clamp(25px, 5vw, 48px);
+      background: rgba(17, 17, 19, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25);
+    }
+
+    h2 {
+      margin: 34px 0 10px;
+      font-size: 22px;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+    }
+
+    h2:first-child {
+      margin-top: 0;
+    }
+
+    p,
+    li {
+      color: #d4d4d8;
+      font-size: 15px;
+    }
+
+    ul,
+    ol {
+      padding-left: 22px;
+    }
+
+    .notice {
+      margin: 20px 0;
+      padding: 18px 20px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 14px;
+      background: rgba(139, 92, 246, 0.08);
+    }
+
+    .notice strong {
+      color: white;
+    }
+
+    footer {
+      padding: 30px 0 50px;
+      text-align: center;
+      color: #71717a;
+      font-size: 13px;
+    }
+
+    footer a {
+      margin: 0 8px;
+      color: #a1a1aa;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        width: min(100% - 28px, 900px);
+      }
+
+      header {
+        padding-bottom: 40px;
+      }
+
+      .back {
+        display: none;
+      }
+
+      main {
+        padding: 24px 20px;
+        border-radius: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <header>
+
+      <a class="brand" href="https://onemail.gdn.com.np/">
+        <span class="logo">O</span>
+        <span>OneMail</span>
+      </a>
+
+      <a class="back" href="https://onemail.gdn.com.np/">
+        Back to OneMail
+      </a>
+
+    </header>
+
+
+    <section class="hero">
+
+      <div class="eyebrow">Legal</div>
+
+      <h1>Terms of Service</h1>
+
+      <div class="date">
+        Effective Date: September 15, 2026 ·
+        Last Updated: September 15, 2026
+      </div>
+
+    </section>
+
+
+    <main>
+
+      <h2>1. Acceptance of Terms</h2>
+
+      <p>
+        These Terms of Service ("Terms") govern your access to
+        and use of OneMail, a free and open-source email client
+        available at
+        <a href="https://onemail.gdn.com.np/">
+          onemail.gdn.com.np
+        </a>.
+      </p>
+
+      <p>
+        By accessing or using OneMail, you agree to these Terms.
+        If you do not agree with these Terms, please do not use
+        the service.
+      </p>
+
+
+      <h2>2. The OneMail Service</h2>
+
+      <p>
+        OneMail is a free, open-source email client that connects
+        to Gmail using Google OAuth and the Gmail API.
+      </p>
+
+      <p>
+        Depending on the permissions you authorize, OneMail may
+        provide the following functionality:
+      </p>
+
+      <ul>
+        <li>Connect a Google account.</li>
+        <li>Read and display Gmail messages.</li>
+        <li>Compose and send emails.</li>
+        <li>Move emails to the Trash.</li>
+      </ul>
+
+      <p>
+        OneMail is provided free of charge.
+      </p>
+
+
+      <h2>3. Google Account Authorization</h2>
+
+      <p>
+        To use OneMail, you authorize access to your Google account
+        through Google's OAuth authorization process.
+      </p>
+
+      <p>
+        You agree that:
+      </p>
+
+      <ul>
+        <li>
+          You will only connect Google accounts that you own or
+          are authorized to access.
+        </li>
+
+        <li>
+          You are responsible for maintaining the security of
+          your Google account.
+        </li>
+
+        <li>
+          You will not use OneMail to access another person's
+          email without authorization.
+        </li>
+
+        <li>
+          You may revoke OneMail's access at any time through
+          your Google Account settings.
+        </li>
+      </ul>
+
+      <p>
+        OneMail does not own your Google account or your Gmail
+        messages.
+      </p>
+
+
+      <h2>4. Your Email Content and Responsibilities</h2>
+
+      <p>
+        You retain ownership of the emails and other content
+        you create or send through OneMail.
+      </p>
+
+      <p>
+        You are responsible for:
+      </p>
+
+      <ul>
+        <li>The content of your emails.</li>
+        <li>The recipients to whom you send emails.</li>
+        <li>Obtaining any necessary permissions.</li>
+        <li>Complying with applicable laws.</li>
+        <li>Protecting your Google account.</li>
+      </ul>
+
+
+      <h2>5. Prohibited Activities</h2>
+
+      <p>
+        You may not use OneMail to:
+      </p>
+
+      <ol>
+        <li>
+          Send spam, phishing messages, or fraudulent communications.
+        </li>
+
+        <li>
+          Distribute malware, viruses, or harmful code.
+        </li>
+
+        <li>
+          Harass, threaten, or abuse other people.
+        </li>
+
+        <li>
+          Impersonate another person or organization.
+        </li>
+
+        <li>
+          Access accounts or information without authorization.
+        </li>
+
+        <li>
+          Violate Google's policies or applicable laws.
+        </li>
+
+        <li>
+          Interfere with the security or operation of OneMail.
+        </li>
+
+        <li>
+          Use the service for unlawful or harmful activities.
+        </li>
+      </ol>
+
+
+      <h2>6. Gmail API Usage</h2>
+
+      <p>
+        OneMail uses Google OAuth and Gmail API services to
+        provide its email functionality.
+      </p>
+
+      <p>
+        You may not use OneMail to circumvent security controls,
+        abuse Google's services, gain unauthorized access to
+        data, or violate the Google API Services User Data Policy.
+      </p>
+
+
+      <h2>7. Privacy</h2>
+
+      <p>
+        Your use of OneMail is also governed by our
+        <a href="/privacy-policy.html">
+          Privacy Policy
+        </a>.
+      </p>
+
+      <p>
+        The Privacy Policy explains how OneMail handles personal
+        information and Google user data.
+      </p>
+
+
+      <h2>8. Third-Party Services</h2>
+
+      <p>
+        OneMail depends on third-party services including
+        Google OAuth and the Gmail API.
+      </p>
+
+      <p>
+        Your use of Google services is subject to Google's
+        applicable terms and policies.
+      </p>
+
+      <p>
+        OneMail does not control third-party services and is not
+        responsible for outages, changes, restrictions, or actions
+        outside our reasonable control.
+      </p>
+
+
+      <h2>9. Open Source</h2>
+
+      <p>
+        OneMail is an open-source project.
+      </p>
+
+      <p>
+        The source code is publicly available at:
+      </p>
+
+      <p>
+        <a
+          href="https://github.com/justbishwash-ctrl/onemail"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          https://github.com/justbishwash-ctrl/onemail
+        </a>
+      </p>
+
+      <p>
+        The use, copying, modification, and distribution of the
+        source code are governed by the open-source license included
+        in the repository.
+      </p>
+
+
+      <h2>10. Availability and Changes</h2>
+
+      <p>
+        We aim to provide a reliable service, but we do not
+        guarantee that OneMail will always be:
+      </p>
+
+      <ul>
+        <li>Available.</li>
+        <li>Error-free.</li>
+        <li>Uninterrupted.</li>
+        <li>Compatible with every Gmail feature.</li>
+      </ul>
+
+      <p>
+        We may modify, suspend, or discontinue parts of OneMail
+        at any time, subject to applicable law.
+      </p>
+
+
+      <h2>11. Disclaimer</h2>
+
+      <p>
+        To the maximum extent permitted by applicable law,
+        OneMail is provided on an "as is" and "as available"
+        basis.
+      </p>
+
+      <p>
+        We disclaim warranties not expressly provided in these
+        Terms, including implied warranties of merchantability,
+        fitness for a particular purpose, and non-infringement,
+        to the extent permitted by law.
+      </p>
+
+      <p>
+        We do not guarantee that emails will always be delivered,
+        received, or displayed without delay or error.
+      </p>
+
+
+      <h2>12. Limitation of Liability</h2>
+
+      <p>
+        To the maximum extent permitted by applicable law,
+        OneMail and its owners, operators, contributors, and
+        service providers will not be liable for indirect,
+        incidental, special, consequential, or punitive damages
+        arising from your use of or inability to use the service.
+      </p>
+
+      <p>
+        Nothing in these Terms excludes liability that cannot
+        legally be excluded.
+      </p>
+
+
+      <h2>13. Suspension and Termination</h2>
+
+      <p>
+        You may stop using OneMail at any time.
+      </p>
+
+      <p>
+        We may suspend or terminate access when reasonably
+        necessary because of:
+      </p>
+
+      <ul>
+        <li>A violation of these Terms.</li>
+        <li>A security or legal risk.</li>
+        <li>A legal requirement.</li>
+        <li>Discontinuation of the service.</li>
+      </ul>
+
+
+      <h2>14. Governing Law</h2>
+
+      <p>
+        These Terms will be governed by the applicable laws
+        of Nepal, unless mandatory laws in your jurisdiction
+        require otherwise.
+      </p>
+
+      <p>
+        Disputes will be subject to the jurisdiction of the
+        appropriate courts of Nepal, unless applicable law
+        provides otherwise.
+      </p>
+
+
+      <h2>15. Changes to These Terms</h2>
+
+      <p>
+        We may update these Terms from time to time.
+      </p>
+
+      <p>
+        When changes are made, we will update the "Last Updated"
+        date on this page.
+      </p>
+
+      <p>
+        Your continued use of OneMail after changes take effect
+        constitutes acceptance of the revised Terms to the extent
+        permitted by law.
+      </p>
+
+
+      <h2>16. Contact Us</h2>
+
+      <p>
+        If you have questions about these Terms, please contact us:
+      </p>
+
+      <p>
+        <strong>OneMail</strong><br />
+
+        <a href="https://onemail.gdn.com.np/">
+          onemail.gdn.com.np
+        </a>
+
+        <br />
+
+        <a href="mailto:bishwashn325@gmail.com">
+          bishwashn325@gmail.com
+        </a>
+      </p>
+
+      <p>
+        GitHub:
+        <a
+          href="https://github.com/justbishwash-ctrl/onemail"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          OneMail on GitHub
+        </a>
+      </p>
+
+    </main>
+
+
+    <footer>
+      © 2026 OneMail
+
+      <br /><br />
+
+      <a href="/privacy-policy.html">
+        Privacy Policy
+      </a>
+
+      <a href="/terms-of-service.html">
+        Terms of Service
+      </a>
+    </footer>
+
+  </div>
+
+</body>
+</html>
