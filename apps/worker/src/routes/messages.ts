@@ -107,6 +107,7 @@ messages.post(
         userId,
         linkedAccountId: accountId,
         gmailMessageId: sent.id,
+        trackingId,
         recipientEmail: body.to[0], // track primary recipient
         subject: body.subject,
       });

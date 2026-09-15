@@ -21,11 +21,11 @@ export async function registerTrackedEmail(
     userId: string;
     linkedAccountId: string;
     gmailMessageId: string;
+    trackingId: string;
     recipientEmail: string;
     subject: string;
   }
 ): Promise<string> {
-  const trackingId = generateTrackingId();
   const recipientHash = await sha256Hex(data.recipientEmail.toLowerCase().trim());
   const subjectPreview = data.subject.slice(0, 100);
 
@@ -33,12 +33,12 @@ export async function registerTrackedEmail(
     userId: data.userId,
     linkedAccountId: data.linkedAccountId,
     gmailMessageId: data.gmailMessageId,
-    trackingId,
+    trackingId: data.trackingId,
     recipientHash,
     subjectPreview,
   });
 
-  return trackingId;
+  return data.trackingId;
 }
 
 export async function processTrackingOpen(
