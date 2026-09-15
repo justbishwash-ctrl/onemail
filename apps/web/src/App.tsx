@@ -58,6 +58,23 @@ function AppShell() {
     closeCompose: s.closeCompose,
   }));
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      const state = useStore.getState();
+      if (state.composeOpen) {
+        event.preventDefault();
+        state.closeCompose();
+      } else if (state.commandPaletteOpen) {
+        event.preventDefault();
+        state.setCommandPaletteOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <>
       <Routes>

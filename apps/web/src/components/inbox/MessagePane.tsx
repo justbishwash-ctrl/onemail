@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DOMPurify from 'dompurify';
 import {
   Archive, Trash2, Reply, ReplyAll, Forward,
@@ -194,10 +194,14 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
                   </span>
                 )}
               </span>
-              <div className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
-                <span className="truncate">From: {senderEmail}</span>
-                <span aria-hidden="true">;</span>
-                <span className="truncate">To: {recipientEmails}</span>
+              <div className="space-y-0.5 text-xs text-muted-foreground">
+                <div className="flex min-w-0 items-start gap-1">
+                  <span className="shrink-0 font-medium text-foreground/70">From:</span>
+                  <span className="min-w-0 break-words">{senderEmail}</span>
+                </div>
+                <div className="flex min-w-0 items-start gap-1">
+                  <span className="shrink-0 font-medium text-foreground/70">To:</span>
+                  <span className="min-w-0 break-words">{recipientEmails}</span>
                 <button
                   type="button"
                   onClick={(event) => {
@@ -213,6 +217,7 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
                 >
                   {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                 </button>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
@@ -230,9 +235,10 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
           {!expanded && (
             <p className="text-xs text-muted-foreground truncate">{message.snippet}</p>
           )}
-          {expanded && (
+          {expanded && message.cc.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              {message.cc.length > 0 ? `cc: ${message.cc.map(extractDisplayName).join('; ')}` : 'Recipients shown above'}
+              <span className="font-medium text-foreground/70">cc:</span>{' '}
+              {message.cc.map(extractDisplayName).join('; ')}
             </p>
           )}
         </div>
@@ -357,6 +363,18 @@ function AttachmentViewer({
   attachment: ParsedMessage['attachments'][number];
   onClose: () => void;
 }) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const url = messagesApi.getAttachmentUrl(
     messageId,
     attachment.attachmentId,
