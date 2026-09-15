@@ -2,10 +2,10 @@ import { useState } from 'react';
 import DOMPurify from 'dompurify';
 import {
   Archive, Trash2, Reply, ReplyAll, Forward,
-  Star, Paperclip, ChevronDown, ChevronUp, ExternalLink, X
+  Star, Paperclip, ChevronDown, ChevronUp, ExternalLink, X, Copy, Check
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { formatFullDate, extractDisplayName, formatFileSize, getInitials } from '../../utils/format';
+import { formatFullDate, extractDisplayName, extractEmailAddress, formatFileSize, getInitials } from '../../utils/format';
 import { useStore } from '../../store';
 import { threadsApi, WORKER_URL } from '../../services/api';
 import type { ParsedThread, ParsedMessage } from '../../types/gmail';
@@ -155,7 +155,15 @@ interface MessageCardProps {
 function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward }: MessageCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const senderName = extractDisplayName(message.from);
+  const senderEmail = extractEmailAddress(message.from);
   const initials = getInitials(senderName);
+  const [copied, setCopied] = useState(false);
+
+  async function copySenderEmail() {
+    await navigator.clipboard.writeText(senderEmail);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
 
   return (
     <div className="border border-border rounded-xl overflow-hidden">
@@ -198,6 +206,18 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
       {expanded && (
         <div className="border-t border-border">
           <div className="px-4 py-4">
+            <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
+              <span className="truncate">{senderEmail}</span>
+              <button
+                type="button"
+                onClick={copySenderEmail}
+                title="Copy sender email"
+                aria-label="Copy sender email"
+                className="shrink-0 p-1 rounded hover:bg-accent hover:text-foreground transition-colors"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
             {message.htmlBody ? (
               <EmailBody html={message.htmlBody} />
             ) : (
