@@ -56,6 +56,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
 
   const [threads, setThreads] = useState<ParsedThread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [labels, setLabels] = useState<GmailLabel[]>([]);
   const [labelUnread, setLabelUnread] = useState<Record<string, number>>({});
@@ -88,6 +89,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
 
   // Load threads on label/folder change
   const loadThreads = useCallback(async (reset = true) => {
+    setLoadError(null);
     const cached = reset ? threadCache.get(cacheKey) : undefined;
     if (cached) {
       setThreads(cached.threads);
@@ -118,6 +120,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
         setSelectedThreadIds([]);
       }
     } catch {
+      setLoadError('Failed to load messages');
       addToast('Failed to load messages', 'error');
     } finally {
       setLoading(false);
@@ -355,6 +358,8 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
               onSelect={openThread}
               onStar={handleStar}
               onTrash={handleTrash}
+              error={loadError}
+              onRetry={() => loadThreads(true)}
               selectedIds={selectedThreadIds}
               onToggleSelect={(threadId) => setSelectedThreadIds((ids) => ids.includes(threadId) ? ids.filter((id) => id !== threadId) : [...ids, threadId])}
               deletingIds={deletingThreadIds}

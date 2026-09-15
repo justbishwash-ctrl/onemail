@@ -18,6 +18,8 @@ interface ThreadListProps {
   onToggleSelect: (threadId: string) => void;
   deletingIds: string[];
   loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export default function ThreadList({
@@ -30,6 +32,8 @@ export default function ThreadList({
   onToggleSelect,
   deletingIds,
   loading,
+  error,
+  onRetry,
 }: ThreadListProps) {
   if (loading && threads.length === 0) {
     return (
@@ -41,7 +45,23 @@ export default function ThreadList({
     );
   }
 
-  if (!loading && threads.length === 0) {
+  if (!loading && error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="text-center">
+          <p className="text-sm text-destructive">{error}</p>
+          <button
+            onClick={onRetry}
+            className="mt-3 px-3 py-1.5 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-accent"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && !error && threads.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
