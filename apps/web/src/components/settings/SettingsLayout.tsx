@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Palette, Shield, Keyboard, ChevronRight, ArrowLeft } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useStore } from '../../store';
-import { meApi } from '../../services/api';
+import { meApi, WORKER_URL } from '../../services/api';
 import { useTheme } from '../../hooks/useTheme';
 import { shortcuts } from '../../hooks/useKeyboard';
 
@@ -127,7 +127,7 @@ function AccountSettings() {
           ))}
 
           <a
-            href="/auth/google?add_account=true"
+            href={`${WORKER_URL}/auth/google?add_account=true`}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors"
           >
             + Add another Google account

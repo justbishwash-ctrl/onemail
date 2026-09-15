@@ -6,7 +6,7 @@ import {
   BarChart2, Mail
 } from 'lucide-react';
 import { useStore } from '../../store';
-import { authApi } from '../../services/api';
+import { authApi, WORKER_URL } from '../../services/api';
 import { getInitials } from '../../utils/format';
 import { cn } from '../../utils/cn';
 import type { GmailLabel } from '../../types/gmail';
@@ -58,7 +58,7 @@ export default function Sidebar({ labels, labelUnread }: SidebarProps) {
 
   async function handleSwitchAccount(accountId: string) {
     try {
-      const res = await fetch('/auth/switch-account', {
+      const res = await fetch(`${WORKER_URL}/auth/switch-account`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -116,7 +116,7 @@ export default function Sidebar({ labels, labelUnread }: SidebarProps) {
 
             <div className="border-t border-border mt-1">
               <a
-                href="/auth/google?add_account=true"
+                href={`${WORKER_URL}/auth/google?add_account=true`}
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent transition-colors text-left"
               >
                 <Plus className="w-3.5 h-3.5 text-muted-foreground" />

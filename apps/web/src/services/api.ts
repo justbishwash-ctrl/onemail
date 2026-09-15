@@ -5,7 +5,8 @@
 
 import type { ParsedThread, ParsedMessage, GmailLabel, GmailSendRequest } from '../types/gmail';
 
-const BASE = '/api';
+export const WORKER_URL = 'https://onemail-cf.therealbishwash.workers.dev';
+const BASE = `${WORKER_URL}/api`;
 
 class ApiError extends Error {
   status: number;
@@ -33,7 +34,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     const data = await res.json() as { error: string; code?: string };
     if (data.code === 'AUTH_REVOKED') {
       // Redirect to re-auth
-      window.location.href = '/auth/google';
+      window.location.href = `${WORKER_URL}/auth/google`;
     }
     throw new ApiError(data.error, 401, data.code);
   }
@@ -191,16 +192,16 @@ export const trackingApi = {
 
 export const authApi = {
   logout: () =>
-    fetch('/auth/logout', { method: 'POST', credentials: 'include' }),
+    fetch(`${WORKER_URL}/auth/logout`, { method: 'POST', credentials: 'include' }),
   switchAccount: (linkedAccountId: string) =>
-    fetch('/auth/switch-account', {
+    fetch(`${WORKER_URL}/auth/switch-account`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ linkedAccountId }),
     }).then((r) => r.json() as Promise<{ ok: boolean; activeAccountId: string }>),
   removeAccount: (accountId: string) =>
-    fetch(`/auth/accounts/${accountId}`, { method: 'DELETE', credentials: 'include' })
+    fetch(`${WORKER_URL}/auth/accounts/${accountId}`, { method: 'DELETE', credentials: 'include' })
       .then((r) => r.json() as Promise<{ ok: boolean }>),
 };
 

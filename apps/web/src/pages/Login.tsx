@@ -1,4 +1,5 @@
 import { Mail } from 'lucide-react';
+import { WORKER_URL } from '../services/api';
 
 export default function Login() {
   return (
@@ -24,7 +25,7 @@ export default function Login() {
           </div>
 
           <a
-            href="/auth/google"
+            href={`${WORKER_URL}/auth/google`}
             className="flex items-center justify-center gap-3 w-full px-4 py-3 rounded-xl border border-border bg-background hover:bg-accent transition-colors duration-150 text-sm font-medium text-foreground group"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">

@@ -7,7 +7,7 @@ import {
 import { cn } from '../../utils/cn';
 import { formatFullDate, extractDisplayName, formatFileSize, getInitials } from '../../utils/format';
 import { useStore } from '../../store';
-import { threadsApi } from '../../services/api';
+import { threadsApi, WORKER_URL } from '../../services/api';
 import type { ParsedThread, ParsedMessage } from '../../types/gmail';
 
 interface MessagePaneProps {
@@ -205,7 +205,7 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
               {message.attachments.map((att) => (
                 <a
                   key={att.id}
-                  href={`/api/messages/${message.id}/attachment/${att.attachmentId}`}
+                  href={`${WORKER_URL}/api/messages/${message.id}/attachment/${att.attachmentId}`}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/40 text-xs hover:bg-accent transition-colors"
                   download={att.filename}
                 >
