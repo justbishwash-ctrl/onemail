@@ -30,7 +30,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (res.status === 401) {
-    const data = await res.json<{ error: string; code?: string }>();
+    const data = await res.json() as { error: string; code?: string };
     if (data.code === 'AUTH_REVOKED') {
       // Redirect to re-auth
       window.location.href = '/auth/google';
@@ -39,14 +39,15 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
-    const data = await res.json<{ error: string; code?: string }>().catch(() => ({
+    const data = await res.json().then((value) => value as { error: string; code?: string }).catch(() => ({
       error: 'Unknown error',
+      code: undefined,
     }));
     throw new ApiError(data.error, res.status, data.code);
   }
 
   if (res.status === 204) return {} as T;
-  return res.json<T>();
+  return res.json() as Promise<T>;
 }
 
 // ── Me ─────────────────────────────────────────────────────
@@ -197,10 +198,10 @@ export const authApi = {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ linkedAccountId }),
-    }).then((r) => r.json<{ ok: boolean; activeAccountId: string }>()),
+    }).then((r) => r.json() as Promise<{ ok: boolean; activeAccountId: string }>),
   removeAccount: (accountId: string) =>
     fetch(`/auth/accounts/${accountId}`, { method: 'DELETE', credentials: 'include' })
-      .then((r) => r.json<{ ok: boolean }>()),
+      .then((r) => r.json() as Promise<{ ok: boolean }>),
 };
 
 export { ApiError };

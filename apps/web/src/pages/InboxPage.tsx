@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Search, X, Menu } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import ThreadList from '../components/inbox/ThreadList';
@@ -26,7 +26,6 @@ interface InboxPageProps {
 
 export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const { labelId } = useParams<{ labelId?: string }>();
-  const navigate = useNavigate();
 
   const {
     me,

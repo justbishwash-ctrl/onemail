@@ -6,7 +6,7 @@ import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
 import {
   X, Minus, Maximize2, Minimize2, Paperclip, Send,
-  Bold, Italic, UnderlineIcon, List, ListOrdered
+  Bold, Italic, UnderlineIcon, List, ListOrdered, Trash2
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useStore } from '../../store';
@@ -430,7 +430,7 @@ interface RecipientFieldProps {
   actions?: React.ReactNode;
 }
 
-function RecipientField({ label, emails, input, onInputChange, onRemove, onKeyDown, actions }: RecipientFieldProps) {
+function RecipientField({ label, emails, input, onInputChange, onAdd, onRemove, onKeyDown, actions }: RecipientFieldProps) {
   return (
     <div className="flex items-center flex-wrap gap-1.5 px-4 py-2 border-b border-border min-h-[40px]">
       <span className="text-xs text-muted-foreground shrink-0 w-7">{label}</span>

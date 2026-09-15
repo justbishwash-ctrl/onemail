@@ -20,12 +20,11 @@ const COMMANDS = [
 ];
 
 export default function CommandPalette() {
-  const { open, setOpen, openCompose, setMe, addToast } = useStore((s) => ({
+  const { open, setOpen, openCompose, setMe } = useStore((s) => ({
     open: s.commandPaletteOpen,
     setOpen: s.setCommandPaletteOpen,
     openCompose: s.openCompose,
     setMe: s.setMe,
-    addToast: s.addToast,
   }));
   const navigate = useNavigate();
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Eye, EyeOff, Clock, BarChart2, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, BarChart2, RefreshCw } from 'lucide-react';
 import { trackingApi, type TrackedEmailItem } from '../../services/api';
-import { formatRelativeDate, truncate } from '../../utils/format';
+import { formatRelativeDate } from '../../utils/format';
 import { cn } from '../../utils/cn';
 
 export default function TrackingDashboard() {

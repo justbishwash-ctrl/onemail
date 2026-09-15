@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Inbox, Star, FileText, Send, Archive, AlertCircle, Trash2,
-  Tag, Settings, ChevronDown, Plus, LogOut, Check, User,
+  Tag, Settings, ChevronDown, Plus, LogOut, Check,
   BarChart2, Mail
 } from 'lucide-react';
 import { useStore } from '../../store';

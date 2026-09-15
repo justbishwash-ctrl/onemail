@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import DOMPurify from 'dompurify';
 import {
-  Archive, Trash2, MoreHorizontal, Reply, ReplyAll, Forward,
+  Archive, Trash2, Reply, ReplyAll, Forward,
   Star, Paperclip, ChevronDown, ChevronUp, ExternalLink, X
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { formatFullDate, extractDisplayName, extractEmailAddress, formatFileSize, getInitials } from '../../utils/format';
+import { formatFullDate, extractDisplayName, formatFileSize, getInitials } from '../../utils/format';
 import { useStore } from '../../store';
 import { threadsApi } from '../../services/api';
 import type { ParsedThread, ParsedMessage } from '../../types/gmail';
@@ -147,7 +147,6 @@ interface MessageCardProps {
 function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward }: MessageCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const senderName = extractDisplayName(message.from);
-  const senderEmail = extractEmailAddress(message.from);
   const initials = getInitials(senderName);
 
   return (
@@ -258,9 +257,7 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
  */
 function EmailBody({ html }: { html: string }) {
   const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: DOMPurify.sanitize('', { RETURN_DOM: false }),
     FORCE_BODY: true,
-    FORBID_SCRIPTS: true,
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
     WHOLE_DOCUMENT: false,
   });
