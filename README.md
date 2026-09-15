@@ -1,6 +1,6 @@
 # Onemail
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/onemail)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/justbishwash-ctrl/onemail)
 
 
 A production-grade Gmail client built on Cloudflare's edge infrastructure.
