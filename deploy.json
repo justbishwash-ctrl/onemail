@@ -1,0 +1,35 @@
+{
+  "button_title": "Deploy to Cloudflare",
+  "description": "Onemail — a multi-account Gmail client on Cloudflare Workers + Pages + D1",
+  "preview_image_url": "https://imagedelivery.net/placeholder/onemail-preview.png",
+  "resources": {
+    "bindings": [
+      {
+        "type": "d1",
+        "binding": "DB",
+        "database_name": "onemail-db"
+      },
+      {
+        "type": "kv_namespace",
+        "binding": "SESSIONS"
+      },
+      {
+        "type": "kv_namespace",
+        "binding": "OAUTH_STATE"
+      },
+      {
+        "type": "r2_bucket",
+        "binding": "ATTACHMENTS",
+        "bucket_name": "onemail-attachments"
+      }
+    ],
+    "required_secrets": [
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "SESSION_SECRET",
+      "TOKEN_ENCRYPTION_KEY",
+      "APP_URL",
+      "WORKER_URL"
+    ]
+  }
+}

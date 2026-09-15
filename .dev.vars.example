@@ -1,0 +1,32 @@
+# ============================================================
+# Onemail — Cloudflare Worker environment variables
+# Copy this file to .dev.vars and fill in real values.
+# NEVER commit .dev.vars to version control.
+# ============================================================
+
+# Google OAuth 2.0
+# Create at: https://console.cloud.google.com/apis/credentials
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Application URL (no trailing slash)
+# Local:      http://localhost:5173
+# Production: https://onemail.yourdomain.com
+APP_URL=http://localhost:5173
+
+# Worker URL (where the API runs)
+# Local:      http://localhost:8787
+# Production: https://api.onemail.yourdomain.com (or Workers subdomain)
+WORKER_URL=http://localhost:8787
+
+# Session secret — 64 random hex chars
+# Generate: openssl rand -hex 32
+SESSION_SECRET=replace-with-64-random-hex-characters
+
+# AES-256-GCM key for encrypting OAuth tokens in D1
+# Must be exactly 32 bytes (64 hex chars)
+# Generate: openssl rand -hex 32
+TOKEN_ENCRYPTION_KEY=replace-with-64-random-hex-characters
+
+# Environment tag
+ENVIRONMENT=development

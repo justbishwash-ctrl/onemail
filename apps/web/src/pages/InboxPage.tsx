@@ -1,0 +1,294 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Search, X, Menu } from 'lucide-react';
+import Sidebar from '../components/layout/Sidebar';
+import ThreadList from '../components/inbox/ThreadList';
+import MessagePane from '../components/inbox/MessagePane';
+import { useStore } from '../store';
+import { threadsApi, labelsApi, searchApi } from '../services/api';
+import { useKeyboard } from '../hooks/useKeyboard';
+import type { GmailLabel, ParsedThread } from '../types/gmail';
+
+// Maps URL path segments to Gmail label IDs
+const PATH_TO_LABEL: Record<string, string> = {
+  inbox:   'INBOX',
+  starred: 'STARRED',
+  drafts:  'DRAFT',
+  sent:    'SENT',
+  archive: 'ARCHIVE',
+  spam:    'SPAM',
+  trash:   'TRASH',
+};
+
+interface InboxPageProps {
+  folder?: string; // passed from route
+}
+
+export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
+  const { labelId } = useParams<{ labelId?: string }>();
+  const navigate = useNavigate();
+
+  const {
+    me,
+    activeThreadId, setActiveThreadId,
+    activeThread, setActiveThread,
+    openCompose,
+    searchQuery, setSearchQuery,
+    sidebarOpen, setSidebarOpen,
+    addToast,
+  } = useStore((s) => ({
+    me: s.me,
+    activeThreadId: s.activeThreadId,
+    setActiveThreadId: s.setActiveThreadId,
+    activeThread: s.activeThread,
+    setActiveThread: s.setActiveThread,
+    openCompose: s.openCompose,
+    searchQuery: s.searchQuery,
+    setSearchQuery: s.setSearchQuery,
+    sidebarOpen: s.sidebarOpen,
+    setSidebarOpen: s.setSidebarOpen,
+    addToast: s.addToast,
+  }));
+
+  const [threads, setThreads] = useState<ParsedThread[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [labels, setLabels] = useState<GmailLabel[]>([]);
+  const [labelUnread, setLabelUnread] = useState<Record<string, number>>({});
+  const [searchInput, setSearchInput] = useState('');
+  const [isSearchMode, setIsSearchMode] = useState(false);
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const activeIndex = threads.findIndex((t) => t.id === activeThreadId);
+
+  // Resolve which Gmail label to fetch
+  const gmailLabel = labelId ?? PATH_TO_LABEL[folder] ?? 'INBOX';
+
+  // Load labels once for sidebar unread counts
+  useEffect(() => {
+    labelsApi.list().then(({ labels: list }) => {
+      setLabels(list);
+      const unread: Record<string, number> = {};
+      list.forEach((l) => {
+        if (l.threadsUnread) unread[l.id] = l.threadsUnread;
+      });
+      setLabelUnread(unread);
+    }).catch(() => {});
+  }, [me?.activeAccount.id]);
+
+  // Load threads on label/folder change
+  const loadThreads = useCallback(async (reset = true) => {
+    setLoading(true);
+    try {
+      const token = reset ? undefined : nextPageToken ?? undefined;
+      const res = isSearchMode && searchQuery
+        ? await searchApi.search(searchQuery, token)
+        : await threadsApi.list({ label: gmailLabel, pageToken: token });
+
+      setThreads((prev) => reset ? res.threads : [...prev, ...res.threads]);
+      setNextPageToken(res.nextPageToken);
+
+      if (reset) {
+        setActiveThreadId(null);
+        setActiveThread(null);
+      }
+    } catch {
+      addToast('Failed to load messages', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [gmailLabel, isSearchMode, searchQuery, nextPageToken]);
+
+  useEffect(() => {
+    loadThreads(true);
+  }, [gmailLabel, me?.activeAccount.id]);
+
+  // Open thread and mark read
+  const openThread = useCallback(async (thread: ParsedThread) => {
+    setActiveThreadId(thread.id);
+    setActiveThread(thread);
+
+    if (thread.isUnread) {
+      try {
+        await threadsApi.markRead(thread.id);
+        setThreads((prev) =>
+          prev.map((t) =>
+            t.id === thread.id
+              ? { ...t, isUnread: false, messages: t.messages.map((m) => ({ ...m, isUnread: false })) }
+              : t
+          )
+        );
+      } catch {
+        // non-critical
+      }
+    }
+  }, []);
+
+  // Remove thread from list (after archive/trash)
+  const dismissThread = useCallback(() => {
+    setThreads((prev) => prev.filter((t) => t.id !== activeThreadId));
+    setActiveThreadId(null);
+    setActiveThread(null);
+  }, [activeThreadId]);
+
+  // Star toggle from thread list
+  const handleStar = useCallback(async (threadId: string, starred: boolean) => {
+    try {
+      await (starred ? threadsApi.star(threadId) : threadsApi.unstar(threadId));
+      setThreads((prev) =>
+        prev.map((t) => (t.id === threadId ? { ...t, isStarred: starred } : t))
+      );
+    } catch {
+      addToast('Failed to update star', 'error');
+    }
+  }, []);
+
+  // Search submit
+  const handleSearch = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setIsSearchMode(false);
+      setSearchQuery('');
+      loadThreads(true);
+      return;
+    }
+    setIsSearchMode(true);
+    setSearchQuery(q);
+    setLoading(true);
+    try {
+      const res = await searchApi.search(q.trim());
+      setThreads(res.threads);
+      setNextPageToken(res.nextPageToken);
+      setActiveThreadId(null);
+      setActiveThread(null);
+    } catch {
+      addToast('Search failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Keyboard shortcuts
+  useKeyboard({
+    c: () => openCompose('new'),
+    '/': () => searchInputRef.current?.focus(),
+    j: () => {
+      const next = Math.min(activeIndex + 1, threads.length - 1);
+      if (threads[next]) openThread(threads[next]);
+    },
+    k: () => {
+      const prev = Math.max(activeIndex - 1, 0);
+      if (threads[prev]) openThread(threads[prev]);
+    },
+    o: () => { if (activeThread) setActiveThread(activeThread); },
+    e: () => { if (activeThreadId) { threadsApi.archive(activeThreadId).then(dismissThread); } },
+    s: () => {
+      if (activeThread) handleStar(activeThread.id, !activeThread.isStarred);
+    },
+    Escape: () => { setActiveThreadId(null); setActiveThread(null); },
+    'Shift+i': () => { if (activeThreadId) threadsApi.markRead(activeThreadId); },
+    'Shift+u': () => { if (activeThreadId) threadsApi.markUnread(activeThreadId); },
+  });
+
+  return (
+    <div className="flex h-full overflow-hidden">
+      {/* Sidebar */}
+      {sidebarOpen && (
+        <Sidebar labels={labels} labelUnread={labelUnread} />
+      )}
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Top bar */}
+        <header className="flex items-center gap-3 px-4 py-2.5 border-b border-border shrink-0 bg-card">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
+          {/* Search bar */}
+          <div className="flex-1 max-w-xl relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch(searchInput);
+                if (e.key === 'Escape') {
+                  setSearchInput('');
+                  setIsSearchMode(false);
+                  setSearchQuery('');
+                  loadThreads(true);
+                  searchInputRef.current?.blur();
+                }
+              }}
+              placeholder="Search mail"
+              className="w-full pl-9 pr-8 py-2 rounded-lg bg-muted/50 border border-transparent focus:border-border focus:bg-background text-sm outline-none transition-colors placeholder:text-muted-foreground"
+            />
+            {searchInput && (
+              <button
+                onClick={() => {
+                  setSearchInput('');
+                  setIsSearchMode(false);
+                  setSearchQuery('');
+                  loadThreads(true);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* Thread list + message pane */}
+        <div className="flex-1 flex min-h-0">
+          {/* Thread list panel */}
+          <div className={`flex flex-col border-r border-border ${activeThread ? 'w-80 shrink-0' : 'flex-1'}`}>
+            {/* Folder title */}
+            <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
+              <h1 className="text-sm font-semibold text-foreground capitalize">
+                {isSearchMode ? `Results for "${searchQuery}"` : folder}
+              </h1>
+              {loading && (
+                <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
+
+            <ThreadList
+              threads={threads}
+              activeThreadId={activeThreadId}
+              onSelect={openThread}
+              onStar={handleStar}
+              loading={loading}
+            />
+
+            {/* Load more */}
+            {nextPageToken && !loading && (
+              <button
+                onClick={() => loadThreads(false)}
+                className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground border-t border-border transition-colors"
+              >
+                Load more
+              </button>
+            )}
+          </div>
+
+          {/* Message pane */}
+          {activeThread && (
+            <MessagePane
+              thread={activeThread}
+              onArchive={dismissThread}
+              onTrash={dismissThread}
+              onClose={() => { setActiveThreadId(null); setActiveThread(null); }}
+              onRefresh={() => loadThreads(true)}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

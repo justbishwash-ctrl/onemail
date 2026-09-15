@@ -1,0 +1,6 @@
+# SPA fallback — all non-asset routes serve index.html
+# API and auth routes are handled by the Worker, not Pages.
+/auth/*   https://api.onemail.yourdomain.com/auth/:splat  200
+/api/*    https://api.onemail.yourdomain.com/api/:splat   200
+/t/*      https://api.onemail.yourdomain.com/t/:splat     200
+/*        /index.html                                       200
