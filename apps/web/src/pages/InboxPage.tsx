@@ -302,6 +302,19 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
 
   const selectedEmailLabel = `${selectedThreadIds.length} email${selectedThreadIds.length === 1 ? '' : 's'}`;
 
+  useEffect(() => {
+    const handleDeleteKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Delete' || selectedThreadIds.length === 0 || bulkDeleting) return;
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      event.preventDefault();
+      setBulkDeleteConfirmOpen(true);
+    };
+
+    window.addEventListener('keydown', handleDeleteKey);
+    return () => window.removeEventListener('keydown', handleDeleteKey);
+  }, [bulkDeleting, selectedThreadIds.length]);
+
   return (
     <div className="flex h-full overflow-hidden">
       {/* Sidebar */}
@@ -378,7 +391,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
               <div className="flex items-center gap-3 shrink-0">
                 {selectedThreadIds.length > 0 && (
                   <button
-                    onClick={handleBulkTrash}
+                    onClick={() => setBulkDeleteConfirmOpen(true)}
                     disabled={bulkDeleting}
                     title="Delete selected emails"
                     className="flex items-center gap-1.5 rounded-md border border-destructive/60 px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
@@ -423,7 +436,18 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
       </div>
 
       {bulkDeleteConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-title">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bulk-delete-title"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              setBulkDeleteConfirmOpen(false);
+            }
+          }}
+        >
           <div className="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-xl">
             <h2 id="bulk-delete-title" className="text-base font-semibold text-foreground">Delete {selectedEmailLabel}?</h2>
             <p className="mt-2 text-sm text-muted-foreground">Do you want to delete {selectedEmailLabel}?</p>
