@@ -1,4 +1,4 @@
-import { Star, Paperclip } from 'lucide-react';
+import { Star, Paperclip, Trash2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import {
   formatEmailDate,
@@ -13,6 +13,7 @@ interface ThreadListProps {
   activeThreadId: string | null;
   onSelect: (thread: ParsedThread) => void;
   onStar: (threadId: string, starred: boolean) => void;
+  onTrash: (threadId: string) => void;
   loading?: boolean;
 }
 
@@ -21,6 +22,7 @@ export default function ThreadList({
   activeThreadId,
   onSelect,
   onStar,
+  onTrash,
   loading,
 }: ThreadListProps) {
   if (loading && threads.length === 0) {
@@ -52,6 +54,7 @@ export default function ThreadList({
           isActive={thread.id === activeThreadId}
           onSelect={onSelect}
           onStar={onStar}
+          onTrash={onTrash}
         />
       ))}
     </div>
@@ -63,9 +66,10 @@ interface ThreadRowProps {
   isActive: boolean;
   onSelect: (thread: ParsedThread) => void;
   onStar: (threadId: string, starred: boolean) => void;
+  onTrash: (threadId: string) => void;
 }
 
-function ThreadRow({ thread, isActive, onSelect, onStar }: ThreadRowProps) {
+function ThreadRow({ thread, isActive, onSelect, onStar, onTrash }: ThreadRowProps) {
   const lastMessage = thread.messages[thread.messages.length - 1];
   const senderName = extractDisplayName(lastMessage?.from ?? '');
   const initials = getInitials(senderName);
@@ -147,6 +151,17 @@ function ThreadRow({ thread, isActive, onSelect, onStar }: ThreadRowProps) {
                   : 'text-muted-foreground hover:text-amber-400'
               )}
             />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTrash(thread.id);
+            }}
+            title="Move to trash"
+            aria-label={`Move ${thread.subject || 'conversation'} to trash`}
+            className="ml-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

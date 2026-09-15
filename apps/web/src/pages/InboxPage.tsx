@@ -163,6 +163,21 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
     }
   }, []);
 
+  const handleTrash = useCallback(async (threadId: string) => {
+    try {
+      await threadsApi.trash(threadId);
+      setThreads((prev) => prev.filter((thread) => thread.id !== threadId));
+      threadCache.delete(cacheKey);
+      if (activeThreadId === threadId) {
+        setActiveThreadId(null);
+        setActiveThread(null);
+      }
+      addToast('Moved to trash', 'success');
+    } catch {
+      addToast('Failed to move message to trash', 'error');
+    }
+  }, [activeThreadId, cacheKey]);
+
   // Search submit
   const handleSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
@@ -283,6 +298,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
               activeThreadId={activeThreadId}
               onSelect={openThread}
               onStar={handleStar}
+              onTrash={handleTrash}
               loading={loading}
             />
 
