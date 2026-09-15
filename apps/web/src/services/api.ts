@@ -5,7 +5,9 @@
 
 import type { ParsedThread, ParsedMessage, GmailLabel, GmailSendRequest } from '../types/gmail';
 
-export const WORKER_URL = 'https://onemail-cf.therealbishwash.workers.dev';
+export const WORKER_URL =
+  (import.meta as ImportMeta & { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ??
+  'https://api.onemail.gdn.com.np';
 const BASE = `${WORKER_URL}/api`;
 
 class ApiError extends Error {

@@ -52,7 +52,7 @@ Click **Add or remove scopes** and add:
 4. Name: `Onemail Web`
 5. **Authorized redirect URIs** — add both:
    - `http://localhost:8787/auth/google/callback` (development)
-   - `https://api.yourdomain.com/auth/google/callback` (production)
+   - `https://api.onemail.gdn.com.np/auth/google/callback` (production)
 6. Click **Create**
 7. Copy **Client ID** and **Client secret**
 
@@ -84,8 +84,13 @@ In your GitHub repo → **Settings → Secrets and variables → Actions**, add:
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret |
 | `SESSION_SECRET` | 64 hex chars (`openssl rand -hex 32`) |
 | `TOKEN_ENCRYPTION_KEY` | 64 hex chars (`openssl rand -hex 32`) |
-| `APP_URL` | `https://onemail.yourdomain.com` |
-| `WORKER_URL` | `https://api.onemail.yourdomain.com` |
+| `APP_URL` | `https://onemail.gdn.com.np` |
+| `WORKER_URL` | `https://api.onemail.gdn.com.np` |
+
+The Pages custom domain is `onemail.gdn.com.np`. The Worker must also have the
+separate custom hostname `api.onemail.gdn.com.np` (a Worker custom domain or
+route in the `gdn.com.np` zone). Do not set `WORKER_URL` to the Pages hostname,
+because the Pages deployment does not serve the OAuth callback.
 
 ## 6. Cloudflare API token permissions
 

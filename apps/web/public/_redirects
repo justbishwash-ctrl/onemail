@@ -1,6 +1,6 @@
 # SPA fallback — all non-asset routes serve index.html
 # API and auth routes are handled by the Worker, not Pages.
-/auth/*   https://onemail-cf.therealbishwash.workers.dev/auth/:splat  200
-/api/*    https://onemail-cf.therealbishwash.workers.dev/api/:splat   200
-/t/*      https://onemail-cf.therealbishwash.workers.dev/t/:splat     200
+/auth/*   https://api.onemail.gdn.com.np/auth/:splat  200
+/api/*    https://api.onemail.gdn.com.np/api/:splat   200
+/t/*      https://api.onemail.gdn.com.np/t/:splat     200
 /*        /index.html                                       200

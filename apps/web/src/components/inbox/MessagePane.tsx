@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DOMPurify from 'dompurify';
 import {
   Archive, Trash2, Reply, ReplyAll, Forward,
-  Star, Paperclip, ChevronDown, ChevronUp, ExternalLink, X, Copy, Check, BadgeCheck
+  Star, Paperclip, ChevronDown, ChevronUp, Download, Printer, X, Copy, Check, BadgeCheck,
+  FileText, Image, Video, Music, Loader2
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { formatFullDate, extractDisplayName, extractEmailAddress, formatFileSize, getInitials, isVerifiedGovernmentSender } from '../../utils/format';
 import { useStore } from '../../store';
-import { threadsApi, WORKER_URL } from '../../services/api';
+import { messagesApi, threadsApi } from '../../services/api';
 import type { ParsedThread, ParsedMessage } from '../../types/gmail';
 
 interface MessagePaneProps {
@@ -134,12 +135,13 @@ export default function MessagePane({ thread, loading = false, copyRecipientAddr
   );
 }
 
-function ActionButton({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
+function ActionButton({ onClick, title, children, disabled = false }: { onClick: () => void; title: string; children: React.ReactNode; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
       title={title}
-      className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      disabled={disabled}
+      className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:pointer-events-none disabled:opacity-40"
     >
       {children}
     </button>
@@ -252,19 +254,11 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward,
           {message.attachments.length > 0 && (
             <div className="px-4 pb-4 flex flex-wrap gap-2">
               {message.attachments.map((att) => (
-                <a
+                <AttachmentButton
                   key={att.id}
-                  href={`${WORKER_URL}/api/messages/${message.id}/attachment/${att.attachmentId}`}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/40 text-xs hover:bg-accent transition-colors"
-                  download={att.filename}
-                >
-                  <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium text-foreground truncate max-w-[160px]">{att.filename}</p>
-                    <p className="text-muted-foreground">{formatFileSize(att.size)}</p>
-                  </div>
-                  <ExternalLink className="w-3 h-3 text-muted-foreground ml-1" />
-                </a>
+                  messageId={message.id}
+                  attachment={att}
+                />
               ))}
             </div>
           )}
@@ -317,4 +311,171 @@ function EmailBody({ html }: { html: string }) {
       dangerouslySetInnerHTML={{ __html: clean }}
     />
   );
+}
+
+function AttachmentButton({
+  messageId,
+  attachment,
+}: {
+  messageId: string;
+  attachment: ParsedMessage['attachments'][number];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/40 text-xs hover:bg-accent transition-colors text-left"
+        title={`Open ${attachment.filename}`}
+      >
+        <AttachmentIcon mimeType={attachment.mimeType} />
+        <div>
+          <p className="font-medium text-foreground truncate max-w-[160px]">{attachment.filename}</p>
+          <p className="text-muted-foreground">{formatFileSize(attachment.size)}</p>
+        </div>
+      </button>
+      {open && (
+        <AttachmentViewer
+          messageId={messageId}
+          attachment={attachment}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function AttachmentViewer({
+  messageId,
+  attachment,
+  onClose,
+}: {
+  messageId: string;
+  attachment: ParsedMessage['attachments'][number];
+  onClose: () => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl: string | null = null;
+
+    messagesApi.getAttachment(messageId, attachment.attachmentId)
+      .then(({ data }) => {
+        if (!active) return;
+        objectUrl = URL.createObjectURL(base64ToBlob(data, attachment.mimeType));
+        setUrl(objectUrl);
+      })
+      .catch(() => {
+        if (active) setError('This attachment could not be loaded.');
+      });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [attachment.attachmentId, attachment.mimeType, messageId]);
+
+  const previewType = getPreviewType(attachment.mimeType);
+  const printable = previewType === 'image' || previewType === 'pdf' || previewType === 'text';
+
+  function download() {
+    if (!url) return;
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = attachment.filename;
+    link.click();
+  }
+
+  function print() {
+    if (!url || !printable) return;
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!printWindow) return;
+    const content = previewType === 'image'
+      ? `<img src="${url}" style="max-width:100%;max-height:100vh;object-fit:contain" />`
+      : previewType === 'pdf'
+        ? `<iframe src="${url}" style="width:100%;height:100vh;border:0"></iframe>`
+        : `<iframe src="${url}" style="width:100%;height:100vh;border:0"></iframe>`;
+    printWindow.document.write(`<title>${escapeHtml(attachment.filename)}</title>${content}`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.addEventListener('load', () => printWindow.print(), { once: true });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label={attachment.filename}>
+      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-xl">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <AttachmentIcon mimeType={attachment.mimeType} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{attachment.filename}</p>
+              <p className="text-xs text-muted-foreground">{formatFileSize(attachment.size)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <ActionButton onClick={download} title="Download" disabled={!url}>
+              <Download className="w-4 h-4" />
+            </ActionButton>
+            {printable && (
+              <ActionButton onClick={print} title="Print" disabled={!url}>
+                <Printer className="w-4 h-4" />
+              </ActionButton>
+            )}
+            <ActionButton onClick={onClose} title="Close">
+              <X className="w-4 h-4" />
+            </ActionButton>
+          </div>
+        </div>
+        <div className="flex min-h-[280px] flex-1 items-center justify-center overflow-auto bg-muted/20 p-4">
+          {!url && !error && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          {url && previewType === 'image' && <img src={url} alt={attachment.filename} className="max-h-[70vh] max-w-full object-contain" />}
+          {url && previewType === 'pdf' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full" />}
+          {url && previewType === 'video' && <video src={url} controls className="max-h-[70vh] max-w-full" />}
+          {url && previewType === 'audio' && <audio src={url} controls className="w-full max-w-lg" />}
+          {url && previewType === 'text' && <iframe src={url} title={attachment.filename} className="h-[70vh] w-full bg-background" />}
+          {url && previewType === 'unsupported' && (
+            <div className="text-center">
+              <FileText className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Preview is unavailable for this file type.</p>
+              <button type="button" onClick={download} className="mt-3 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Download file</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttachmentIcon({ mimeType }: { mimeType: string }) {
+  if (mimeType.startsWith('image/')) return <Image className="h-3.5 w-3.5 text-muted-foreground" />;
+  if (mimeType.startsWith('video/')) return <Video className="h-3.5 w-3.5 text-muted-foreground" />;
+  if (mimeType.startsWith('audio/')) return <Music className="h-3.5 w-3.5 text-muted-foreground" />;
+  return <FileText className="h-3.5 w-3.5 text-muted-foreground" />;
+}
+
+function getPreviewType(mimeType: string): 'image' | 'pdf' | 'video' | 'audio' | 'text' | 'unsupported' {
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType === 'application/pdf') return 'pdf';
+  if (mimeType.startsWith('video/')) return 'video';
+  if (mimeType.startsWith('audio/')) return 'audio';
+  if (mimeType.startsWith('text/')) return 'text';
+  return 'unsupported';
+}
+
+function base64ToBlob(value: string, mimeType: string): Blob {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return new Blob([bytes], { type: mimeType || 'application/octet-stream' });
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character);
 }

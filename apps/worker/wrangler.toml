@@ -31,10 +31,11 @@ bucket_name = "onemail-attachments"
 ENVIRONMENT = "development"
 
 # ── Routes ────────────────────────────────────────────────
-# Set these after deploying Pages to point Workers at your domain
-# [[routes]]
-# pattern = "api.onemail.yourdomain.com/*"
-# zone_name = "yourdomain.com"
+# The API uses a separate hostname from the Pages app so OAuth callbacks
+# reach the Worker while the user-facing app remains on onemail.gdn.com.np.
+[[routes]]
+pattern = "api.onemail.gdn.com.np/*"
+zone_name = "gdn.com.np"
 
 # ── Production environment override ───────────────────────
 [env.production]
