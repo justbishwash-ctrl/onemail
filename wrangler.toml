@@ -29,3 +29,23 @@ ENVIRONMENT = "development"
 [env.production]
 name = "onemail-cf"
 vars = { ENVIRONMENT = "production" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "onemail-db"
+database_id = "a834c1d3-4785-4e6c-b353-4ac3ac1570fe"
+migrations_dir = "migrations"
+
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "13bf2ffc6e424f74b8e51a0181637739"
+preview_id = "7bfc8d3138ff4599a056fbf40c29fd97"
+
+[[env.production.kv_namespaces]]
+binding = "OAUTH_STATE"
+id = "1caa643378aa42c2b7f4a3a87bfa5849"
+preview_id = "523396f10c7848b588cdede16763cc60"
+
+[[env.production.r2_buckets]]
+binding = "ATTACHMENTS"
+bucket_name = "onemail-attachments"
