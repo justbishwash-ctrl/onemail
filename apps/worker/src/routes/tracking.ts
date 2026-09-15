@@ -32,8 +32,8 @@ tracking.get(
       return transparentGif(); // always return GIF, never hint at validity
     }
 
-    // Fire and forget — do not delay GIF response on DB write
-    c.executionCtx.waitUntil(processTrackingOpen(c.env, trackingId, c.req.raw));
+    // Complete the write before responding so the dashboard cannot race the pixel request.
+    await processTrackingOpen(c.env, trackingId, c.req.raw);
 
     return transparentGif();
   }

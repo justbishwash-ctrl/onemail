@@ -65,7 +65,7 @@ export async function buildMimeMessage(
   // Inject tracking pixel into HTML body
   let htmlBody = req.htmlBody;
   if (trackingPixelUrl) {
-    htmlBody += `\n<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`;
+    htmlBody += `\n<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:block;border:0" />`;
   }
 
   const altBoundary = generateBoundary();
