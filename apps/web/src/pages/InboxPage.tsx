@@ -404,6 +404,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
             <MessagePane
               thread={activeThread}
               loading={threadLoading}
+              copyRecipientAddress={gmailLabel === 'SENT'}
               onArchive={dismissThread}
               onTrash={dismissThread}
               onClose={() => { setActiveThreadId(null); setActiveThread(null); }}

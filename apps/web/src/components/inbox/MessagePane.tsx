@@ -13,13 +13,14 @@ import type { ParsedThread, ParsedMessage } from '../../types/gmail';
 interface MessagePaneProps {
   thread: ParsedThread | null;
   loading?: boolean;
+  copyRecipientAddress?: boolean;
   onArchive: () => void;
   onTrash: () => void;
   onClose: () => void;
   onRefresh: () => void;
 }
 
-export default function MessagePane({ thread, loading = false, onArchive, onTrash, onClose, onRefresh }: MessagePaneProps) {
+export default function MessagePane({ thread, loading = false, copyRecipientAddress = false, onArchive, onTrash, onClose, onRefresh }: MessagePaneProps) {
   const { openCompose, addToast } = useStore((s) => ({
     openCompose: s.openCompose,
     addToast: s.addToast,
@@ -124,6 +125,7 @@ export default function MessagePane({ thread, loading = false, onArchive, onTras
             onReply={() => openCompose('reply', thread)}
             onReplyAll={() => openCompose('replyAll', thread)}
             onForward={() => openCompose('forward', thread)}
+            copyRecipientAddress={copyRecipientAddress}
           />
         ))}
       </div>
@@ -150,21 +152,19 @@ interface MessageCardProps {
   onReply: () => void;
   onReplyAll: () => void;
   onForward: () => void;
+  copyRecipientAddress: boolean;
 }
 
-function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward }: MessageCardProps) {
+function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward, copyRecipientAddress }: MessageCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const senderName = extractDisplayName(message.from);
   const senderEmail = extractEmailAddress(message.from);
   const verifiedSender = isVerifiedGovernmentSender(message.from);
+  const recipientEmails = message.to.map(extractEmailAddress).join(', ');
+  const copyValue = copyRecipientAddress ? recipientEmails : senderEmail;
+  const copyLabel = copyRecipientAddress ? 'recipient address' : 'sender email';
   const initials = getInitials(senderName);
   const [copied, setCopied] = useState(false);
-
-  async function copySenderEmail() {
-    await navigator.clipboard.writeText(senderEmail);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
-  }
 
   return (
     <div className="border border-border rounded-xl overflow-hidden">
@@ -193,15 +193,18 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
                 )}
               </span>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="truncate">{senderEmail}</span>
+                <span className="truncate">{copyRecipientAddress ? recipientEmails : senderEmail}</span>
                 <button
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
-                    copySenderEmail();
+                    navigator.clipboard.writeText(copyValue).then(() => {
+                      setCopied(true);
+                      window.setTimeout(() => setCopied(false), 1500);
+                    });
                   }}
-                  title="Copy sender email"
-                  aria-label="Copy sender email"
+                  title={`Copy ${copyLabel}`}
+                  aria-label={`Copy ${copyLabel}`}
                   className="shrink-0 p-0.5 rounded hover:bg-accent hover:text-foreground transition-colors"
                 >
                   {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
