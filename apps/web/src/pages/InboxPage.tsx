@@ -69,6 +69,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const loadingMoreRef = useRef(false);
   const activeIndex = threads.findIndex((t) => t.id === activeThreadId);
 
   // Resolve which Gmail label to fetch
@@ -90,6 +91,8 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
 
   // Load threads on label/folder change
   const loadThreads = useCallback(async (reset = true) => {
+    if (!reset && loadingMoreRef.current) return;
+    if (!reset) loadingMoreRef.current = true;
     setLoadError(null);
     const cached = reset ? threadCache.get(cacheKey) : undefined;
     if (cached) {
@@ -102,7 +105,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
     try {
       const token = reset ? undefined : nextPageToken ?? undefined;
       const res = isSearchMode && searchQuery
-        ? await searchApi.search(searchQuery, token)
+        ? await searchApi.search(searchQuery, token, THREAD_PAGE_SIZE)
         : await threadsApi.list({ label: gmailLabel, pageToken: token, maxResults: THREAD_PAGE_SIZE });
 
       const combinedThreads = reset ? res.threads : [...threads, ...res.threads];
@@ -120,10 +123,11 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
         setSelectedThreadIds([]);
       }
     } catch {
-      setLoadError('Failed to load messages');
+      if (reset || threads.length === 0) setLoadError('Failed to load messages');
       addToast('Failed to load messages', 'error');
     } finally {
       setLoading(false);
+      if (!reset) loadingMoreRef.current = false;
     }
   }, [cacheKey, gmailLabel, isSearchMode, searchQuery, nextPageToken, threads]);
 

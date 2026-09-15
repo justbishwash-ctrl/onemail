@@ -159,9 +159,10 @@ export const labelsApi = {
 // ── Search ─────────────────────────────────────────────────
 
 export const searchApi = {
-  search: (q: string, pageToken?: string) => {
+  search: (q: string, pageToken?: string, maxResults = 15) => {
     const qs = new URLSearchParams({ q });
     if (pageToken) qs.set('pageToken', pageToken);
+    qs.set('maxResults', String(maxResults));
     return apiFetch<ThreadsResponse>(`/search?${qs.toString()}`);
   },
 };
