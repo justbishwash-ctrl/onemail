@@ -20,6 +20,11 @@ const PATH_TO_LABEL: Record<string, string> = {
   trash:   'TRASH',
 };
 
+const threadCache = new Map<string, {
+  threads: ParsedThread[];
+  nextPageToken: string | null;
+}>();
+
 interface InboxPageProps {
   folder?: string; // passed from route
 }
@@ -62,6 +67,8 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
 
   // Resolve which Gmail label to fetch
   const gmailLabel = labelId ?? PATH_TO_LABEL[folder] ?? 'INBOX';
+  const accountId = me?.activeAccount.id ?? '';
+  const cacheKey = `${accountId}:${isSearchMode ? `search:${searchQuery}` : `label:${gmailLabel}`}`;
 
   // Load labels once for sidebar unread counts
   useEffect(() => {
@@ -77,7 +84,14 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
 
   // Load threads on label/folder change
   const loadThreads = useCallback(async (reset = true) => {
-    setLoading(true);
+    const cached = reset ? threadCache.get(cacheKey) : undefined;
+    if (cached) {
+      setThreads(cached.threads);
+      setNextPageToken(cached.nextPageToken);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     try {
       const token = reset ? undefined : nextPageToken ?? undefined;
       const res = isSearchMode && searchQuery
@@ -88,6 +102,13 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
       setNextPageToken(res.nextPageToken);
 
       if (reset) {
+        threadCache.set(cacheKey, {
+          threads: res.threads,
+          nextPageToken: res.nextPageToken,
+        });
+      }
+
+      if (reset) {
         setActiveThreadId(null);
         setActiveThread(null);
       }
@@ -96,7 +117,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
     } finally {
       setLoading(false);
     }
-  }, [gmailLabel, isSearchMode, searchQuery, nextPageToken]);
+  }, [cacheKey, gmailLabel, isSearchMode, searchQuery, nextPageToken]);
 
   useEffect(() => {
     loadThreads(true);
