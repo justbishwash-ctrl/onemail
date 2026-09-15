@@ -1,0 +1,31 @@
+name = "onemail"
+main = "apps/worker/src/index.ts"
+compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "onemail-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "REPLACE_WITH_YOUR_KV_SESSIONS_ID"
+preview_id = "REPLACE_WITH_YOUR_KV_SESSIONS_PREVIEW_ID"
+
+[[kv_namespaces]]
+binding = "OAUTH_STATE"
+id = "REPLACE_WITH_YOUR_KV_OAUTH_STATE_ID"
+preview_id = "REPLACE_WITH_YOUR_KV_OAUTH_STATE_PREVIEW_ID"
+
+[[r2_buckets]]
+binding = "ATTACHMENTS"
+bucket_name = "onemail-attachments"
+
+[vars]
+ENVIRONMENT = "development"
+
+[env.production]
+name = "onemail"
+vars = { ENVIRONMENT = "production" }
