@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from '../store';
 
 type ShortcutHandler = (e: KeyboardEvent) => void;
@@ -23,9 +23,11 @@ const shortcuts: Record<string, string> = {
 
 export function useKeyboard(handlers: Partial<Record<keyof typeof shortcuts | string, ShortcutHandler>>) {
   const me = useStore((s) => s.me);
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
 
   useEffect(() => {
-    if (!me?.preferences.shortcutsEnabled) return;
+    if (me?.preferences.shortcutsEnabled === false) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore when typing in inputs/textareas
@@ -40,10 +42,11 @@ export function useKeyboard(handlers: Partial<Record<keyof typeof shortcuts | st
       }
 
       let key = e.key;
-      if (e.shiftKey && key.length === 1) key = `Shift+${key.toLowerCase()}`;
+      if (e.shiftKey && key.length === 1 && key !== '?') key = `Shift+${key.toLowerCase()}`;
       else if (e.shiftKey && key.length > 1) key = `Shift+${key}`;
+      else if (key.length === 1 && /[A-Za-z]/.test(key)) key = key.toLowerCase();
 
-      const handler = handlers[key];
+      const handler = handlersRef.current[key];
       if (handler) {
         e.preventDefault();
         handler(e);
@@ -52,7 +55,7 @@ export function useKeyboard(handlers: Partial<Record<keyof typeof shortcuts | st
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlers, me?.preferences.shortcutsEnabled]);
+  }, [me?.preferences.shortcutsEnabled]);
 }
 
 export { shortcuts };
