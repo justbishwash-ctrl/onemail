@@ -216,7 +216,11 @@ export const authApi = {
     }).then((r) => r.json() as Promise<{ ok: boolean; activeAccountId: string }>),
   removeAccount: (accountId: string) =>
     fetch(`${WORKER_URL}/auth/accounts/${accountId}`, { method: 'DELETE', credentials: 'include' })
-      .then((r) => r.json() as Promise<{ ok: boolean }>),
+      .then(async (r) => {
+        const data = await r.json() as { ok?: boolean; activeAccountId?: string; error?: string };
+        if (!r.ok) throw new Error(data.error ?? 'Failed to remove account');
+        return data as { ok: boolean; activeAccountId?: string };
+      }),
 };
 
 export { ApiError };

@@ -296,9 +296,24 @@ auth.delete('/accounts/:id', requireAuth, async (c) => {
 
   if (!target) return c.json({ error: 'Account not found' }, 404);
 
+  if (target.is_primary === 1) {
+    return c.json({ error: 'The primary account cannot be removed' }, 403);
+  }
+
   // Cannot remove the only account
   if (accounts.length === 1) {
     return c.json({ error: 'Cannot remove the only linked account' }, 400);
+  }
+
+  const primary = accounts.find((account) => account.is_primary === 1);
+  const sessionId = getSessionIdFromRequest(c.req.raw);
+  const session = sessionId ? await getSession(c.env, sessionId) : null;
+
+  if (!primary) return c.json({ error: 'Primary account not found' }, 500);
+
+  // Move the current session back to the primary account before deleting it.
+  if (session?.activeAccountId === accountId && sessionId) {
+    await switchActiveAccount(c.env, sessionId, primary.id);
   }
 
   // Revoke token best-effort
@@ -314,7 +329,7 @@ auth.delete('/accounts/:id', requireAuth, async (c) => {
 
   await deleteLinkedAccount(c.env.DB, accountId);
 
-  return c.json({ ok: true });
+  return c.json({ ok: true, activeAccountId: session?.activeAccountId === accountId ? primary.id : session?.activeAccountId });
 });
 
 export { auth as authRouter };

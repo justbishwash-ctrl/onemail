@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Palette, Shield, Keyboard, ChevronRight, ArrowLeft } from 'lucide-react';
+import { User, Palette, Shield, Keyboard, ChevronRight, ArrowLeft, Trash2, LoaderCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useStore } from '../../store';
-import { meApi, WORKER_URL } from '../../services/api';
+import { authApi, meApi, WORKER_URL } from '../../services/api';
 import { useTheme } from '../../hooks/useTheme';
 import { shortcuts } from '../../hooks/useKeyboard';
 
@@ -72,9 +72,34 @@ export function SettingsLayout() {
 // ── Account ────────────────────────────────────────────────
 
 function AccountSettings() {
-  const me = useStore((s) => s.me);
+  const { me, setMe, addToast } = useStore((s) => ({ me: s.me, setMe: s.setMe, addToast: s.addToast }));
+  const [accountToRemove, setAccountToRemove] = useState<{ id: string; email: string } | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAccountToRemove(null);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, []);
 
   if (!me) return null;
+
+  async function removeAccount() {
+    if (!accountToRemove) return;
+    setRemoving(true);
+    try {
+      await authApi.removeAccount(accountToRemove.id);
+      setMe(await meApi.get());
+      setAccountToRemove(null);
+      addToast('Linked account removed', 'success');
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Failed to remove account', 'error');
+    } finally {
+      setRemoving(false);
+    }
+  }
 
   return (
     <div>
@@ -123,6 +148,17 @@ function AccountSettings() {
                   Primary
                 </span>
               )}
+              {!acc.isPrimary && (
+                <button
+                  type="button"
+                  onClick={() => setAccountToRemove({ id: acc.id, email: acc.email })}
+                  title={`Remove ${acc.email}`}
+                  aria-label={`Remove ${acc.email}`}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           ))}
 
@@ -134,6 +170,22 @@ function AccountSettings() {
           </a>
         </div>
       </Section>
+
+      {accountToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="remove-account-title">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-xl">
+            <h2 id="remove-account-title" className="text-base font-semibold text-foreground">Remove linked account?</h2>
+            <p className="mt-2 break-words text-sm text-muted-foreground">Remove {accountToRemove.email} and stop access to its mail?</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setAccountToRemove(null)} disabled={removing} className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50">Cancel</button>
+              <button type="button" onClick={() => void removeAccount()} disabled={removing} className="flex items-center gap-2 rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground hover:opacity-90 disabled:opacity-50">
+                {removing && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
