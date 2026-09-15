@@ -5,9 +5,10 @@
 # =============================================================================
 set -euo pipefail
 
-WORKER_DIR="apps/worker"
-WEB_DIR="apps/web"
-WRANGLER="$WORKER_DIR/node_modules/.bin/wrangler"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKER_DIR="$ROOT_DIR/apps/worker"
+WEB_DIR="$ROOT_DIR/apps/web"
+WRANGLER="$ROOT_DIR/node_modules/.bin/wrangler"
 
 echo ""
 echo "██████████  Onemail Deploy  ██████████"
