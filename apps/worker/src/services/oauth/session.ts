@@ -13,7 +13,7 @@ export function buildSessionCookie(sessionId: string, secure: boolean): string {
   const parts = [
     `${SESSION_COOKIE_NAME}=${sessionId}`,
     'HttpOnly',
-    'SameSite=Lax',
+    `SameSite=${secure ? 'None' : 'Lax'}`,
     `Max-Age=${SESSION_TTL_SECONDS}`,
     'Path=/',
   ];
