@@ -63,14 +63,19 @@ me.patch('/preferences', requireAuth, async (c) => {
     density?: 'compact' | 'comfortable' | 'spacious';
   }>();
 
+  const current = await getUserPreferences(c.env.DB, userId, activeAccountId);
   await upsertUserPreferences(c.env.DB, {
     user_id: userId,
     linked_account_id: activeAccountId,
-    theme: body.theme ?? 'system',
-    tracking_enabled: body.trackingEnabled !== false ? 1 : 0,
-    signature: body.signature ?? null,
-    shortcuts_enabled: body.shortcutsEnabled !== false ? 1 : 0,
-    density: body.density ?? 'comfortable',
+    theme: body.theme ?? current?.theme ?? 'system',
+    tracking_enabled: body.trackingEnabled === undefined
+      ? current?.tracking_enabled ?? 1
+      : body.trackingEnabled ? 1 : 0,
+    signature: body.signature === undefined ? current?.signature ?? null : body.signature,
+    shortcuts_enabled: body.shortcutsEnabled === undefined
+      ? current?.shortcuts_enabled ?? 1
+      : body.shortcutsEnabled ? 1 : 0,
+    density: body.density ?? current?.density ?? 'comfortable',
   });
 
   return c.json({ ok: true });

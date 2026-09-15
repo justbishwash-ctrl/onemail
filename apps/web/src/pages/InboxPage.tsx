@@ -64,6 +64,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const [selectedThreadIds, setSelectedThreadIds] = useState<string[]>([]);
   const [deletingThreadIds, setDeletingThreadIds] = useState<string[]>([]);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState(0);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const activeIndex = threads.findIndex((t) => t.id === activeThreadId);
@@ -187,20 +188,29 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
 
   const handleBulkTrash = useCallback(async () => {
     if (selectedThreadIds.length === 0) return;
+    const idsToDelete = [...selectedThreadIds];
     setBulkDeleting(true);
-    const results = await Promise.allSettled(selectedThreadIds.map((id) => threadsApi.trash(id)));
-    const deletedIds = selectedThreadIds.filter((_, index) => results[index].status === 'fulfilled');
-    if (deletedIds.length > 0) {
-      setThreads((current) => current.filter((thread) => !deletedIds.includes(thread.id)));
-      threadCache.delete(cacheKey);
+    setBulkDeleteProgress(0);
+    const deletedIds: string[] = [];
+    for (const [index, id] of idsToDelete.entries()) {
+      try {
+        await threadsApi.trash(id);
+        deletedIds.push(id);
+        setThreads((current) => current.filter((thread) => thread.id !== id));
+      } catch {
+        // Continue deleting the remaining selected conversations.
+      } finally {
+        setBulkDeleteProgress(index + 1);
+      }
     }
+    if (deletedIds.length > 0) threadCache.delete(cacheKey);
     setSelectedThreadIds([]);
     setBulkDeleting(false);
     addToast(
-      deletedIds.length === selectedThreadIds.length
+      deletedIds.length === idsToDelete.length
         ? `${deletedIds.length} conversations moved to trash`
-        : `${deletedIds.length} deleted; some failed`,
-      deletedIds.length === selectedThreadIds.length ? 'success' : 'error'
+        : `${deletedIds.length} deleted; ${idsToDelete.length - deletedIds.length} failed`,
+      deletedIds.length === idsToDelete.length ? 'success' : 'error'
     );
   }, [cacheKey, selectedThreadIds]);
 
@@ -332,7 +342,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
                   >
                     {bulkDeleting ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    {bulkDeleting ? 'Deleting...' : `Delete ${selectedThreadIds.length}`}
+                    {bulkDeleting ? `Deleting ${bulkDeleteProgress}/${selectedThreadIds.length}` : `Delete ${selectedThreadIds.length}`}
                   </button>
                 )}
                 {loading && <LoaderCircle className="w-3.5 h-3.5 animate-spin text-primary" />}
