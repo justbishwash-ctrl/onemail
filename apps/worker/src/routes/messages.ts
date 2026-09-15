@@ -38,9 +38,36 @@ messages.get('/:id/attachment/:attachmentId', requireAuth, async (c) => {
   const attachmentId = c.req.param('attachmentId');
   const accessToken = await getValidAccessToken(c.env, accountId);
   const att = await getAttachment(accessToken, messageId, attachmentId);
-  // Return raw base64 — frontend decodes
-  return c.json({ data: att.data, size: att.size });
+  const binary = decodeBase64Url(att.data);
+  const mimeType = getSafeMimeType(c.req.query('mimeType'));
+  const filename = (c.req.query('filename') ?? 'attachment').replace(/[\r\n"\\]/g, '_');
+
+  return new Response(binary, {
+    headers: {
+      'Content-Type': mimeType,
+      'Content-Length': String(binary.byteLength),
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Cache-Control': 'private, no-store',
+    },
+  });
 });
+
+function decodeBase64Url(data: string): Uint8Array {
+  const base64 = data.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
+}
+
+function getSafeMimeType(value: string | undefined): string {
+  return value && /^[\w!#$&^_.+-]+\/[\w!#$&^_.+-]+$/.test(value)
+    ? value
+    : 'application/octet-stream';
+}
 
 // POST /api/messages/send
 messages.post(

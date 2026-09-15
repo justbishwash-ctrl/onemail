@@ -120,8 +120,14 @@ export const messagesApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  getAttachment: (messageId: string, attachmentId: string) =>
-    apiFetch<{ data: string; size: number }>(`/messages/${messageId}/attachment/${attachmentId}`),
+  getAttachment: async (messageId: string, attachmentId: string, mimeType: string, filename: string) => {
+    const query = new URLSearchParams({ mimeType, filename });
+    const res = await fetch(`${BASE}/messages/${messageId}/attachment/${attachmentId}?${query}`, {
+      credentials: 'include',
+    });
+    if (!res.ok) throw new ApiError('Failed to load attachment', res.status);
+    return res.blob();
+  },
   markRead: (id: string) =>
     apiFetch<{ ok: boolean }>(`/messages/${id}/read`, { method: 'POST' }),
   markUnread: (id: string) =>

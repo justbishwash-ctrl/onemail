@@ -363,10 +363,10 @@ function AttachmentViewer({
     let active = true;
     let objectUrl: string | null = null;
 
-    messagesApi.getAttachment(messageId, attachment.attachmentId)
-      .then(({ data }) => {
+    messagesApi.getAttachment(messageId, attachment.attachmentId, attachment.mimeType, attachment.filename)
+      .then((blob) => {
         if (!active) return;
-        objectUrl = URL.createObjectURL(base64ToBlob(data, attachment.mimeType));
+        objectUrl = URL.createObjectURL(blob);
         setUrl(objectUrl);
       })
       .catch(() => {
@@ -465,15 +465,6 @@ function getPreviewType(mimeType: string): 'image' | 'pdf' | 'video' | 'audio' |
   if (mimeType.startsWith('audio/')) return 'audio';
   if (mimeType.startsWith('text/')) return 'text';
   return 'unsupported';
-}
-
-function base64ToBlob(value: string, mimeType: string): Blob {
-  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return new Blob([bytes], { type: mimeType || 'application/octet-stream' });
 }
 
 function escapeHtml(value: string): string {
