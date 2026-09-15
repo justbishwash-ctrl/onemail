@@ -1,9 +1,10 @@
-import { Star, Paperclip, Trash2, LoaderCircle } from 'lucide-react';
+import { Star, Paperclip, Trash2, LoaderCircle, BadgeCheck } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import {
   formatEmailDate,
   extractDisplayName,
   getInitials,
+  isVerifiedGovernmentSender,
   truncate,
 } from '../../utils/format';
 import type { ParsedThread } from '../../types/gmail';
@@ -122,6 +123,7 @@ interface ThreadRowProps {
 function ThreadRow({ thread, isActive, onSelect, onStar, onTrash, selected, onToggleSelect, deleting }: ThreadRowProps) {
   const lastMessage = thread.messages[thread.messages.length - 1];
   const senderName = extractDisplayName(lastMessage?.from ?? '');
+  const verifiedSender = isVerifiedGovernmentSender(lastMessage?.from ?? '');
   const initials = getInitials(senderName);
 
   return (
@@ -162,6 +164,11 @@ function ThreadRow({ thread, isActive, onSelect, onStar, onTrash, selected, onTo
             >
               {senderName}
             </span>
+            {verifiedSender && (
+              <span title="Verified .gov.np sender" className="shrink-0">
+                <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
+              </span>
+            )}
             {thread.messageCount > 1 && (
               <span className="text-xs text-muted-foreground shrink-0">
                 ({thread.messageCount})

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import DOMPurify from 'dompurify';
 import {
   Archive, Trash2, Reply, ReplyAll, Forward,
-  Star, Paperclip, ChevronDown, ChevronUp, ExternalLink, X, Copy, Check
+  Star, Paperclip, ChevronDown, ChevronUp, ExternalLink, X, Copy, Check, BadgeCheck
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { formatFullDate, extractDisplayName, extractEmailAddress, formatFileSize, getInitials } from '../../utils/format';
+import { formatFullDate, extractDisplayName, extractEmailAddress, formatFileSize, getInitials, isVerifiedGovernmentSender } from '../../utils/format';
 import { useStore } from '../../store';
 import { threadsApi, WORKER_URL } from '../../services/api';
 import type { ParsedThread, ParsedMessage } from '../../types/gmail';
@@ -156,6 +156,7 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
   const [expanded, setExpanded] = useState(defaultExpanded);
   const senderName = extractDisplayName(message.from);
   const senderEmail = extractEmailAddress(message.from);
+  const verifiedSender = isVerifiedGovernmentSender(message.from);
   const initials = getInitials(senderName);
   const [copied, setCopied] = useState(false);
 
@@ -183,7 +184,14 @@ function MessageCard({ message, defaultExpanded, onReply, onReplyAll, onForward 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-0.5">
             <div className="min-w-0">
-              <span className="text-sm font-medium text-foreground">{senderName}</span>
+              <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+                {senderName}
+                {verifiedSender && (
+                  <span title="Verified .gov.np sender" className="shrink-0">
+                    <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
+                  </span>
+                )}
+              </span>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <span className="truncate">{senderEmail}</span>
                 <button

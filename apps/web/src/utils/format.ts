@@ -31,6 +31,12 @@ export function extractEmailAddress(str: string): string {
   return match ? match[1] : str.trim();
 }
 
+export function isVerifiedGovernmentSender(str: string): boolean {
+  const email = extractEmailAddress(str).toLowerCase();
+  const domain = email.split('@').pop() ?? '';
+  return domain.endsWith('.gov.np');
+}
+
 export function extractDisplayName(str: string): string {
   const match = str.match(/^([^<]+)</);
   return match ? match[1].trim().replace(/^"|"$/g, '') : extractEmailAddress(str);

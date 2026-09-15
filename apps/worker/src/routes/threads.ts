@@ -6,6 +6,7 @@ import {
   getThread,
   modifyThread,
   trashThread,
+  deleteThread,
   untrashThread,
   parseThread,
 } from '../services/gmail/client.ts';
@@ -91,6 +92,15 @@ threads.post('/:id/trash', requireAuth, async (c) => {
   const threadId = c.req.param('id');
   const accessToken = await getValidAccessToken(c.env, accountId);
   await trashThread(accessToken, threadId);
+  return c.json({ ok: true });
+});
+
+// DELETE /api/threads/:id
+threads.delete('/:id', requireAuth, async (c) => {
+  const accountId = c.get('activeAccountId');
+  const threadId = c.req.param('id');
+  const accessToken = await getValidAccessToken(c.env, accountId);
+  await deleteThread(accessToken, threadId);
   return c.json({ ok: true });
 });
 

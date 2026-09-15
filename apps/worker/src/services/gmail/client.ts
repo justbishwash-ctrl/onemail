@@ -131,6 +131,12 @@ export async function trashThread(accessToken: string, threadId: string): Promis
   });
 }
 
+export async function deleteThread(accessToken: string, threadId: string): Promise<void> {
+  await gmailFetch(accessToken, `/threads/${encodeURIComponent(threadId)}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function untrashThread(accessToken: string, threadId: string): Promise<void> {
   await gmailFetch(accessToken, `/threads/${encodeURIComponent(threadId)}/untrash`, {
     method: 'POST',

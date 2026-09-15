@@ -95,6 +95,7 @@ export const threadsApi = {
   get: (id: string) => apiFetch<ParsedThread>(`/threads/${id}`),
   archive: (id: string) => apiFetch<{ ok: boolean }>(`/threads/${id}/archive`, { method: 'POST' }),
   trash: (id: string) => apiFetch<{ ok: boolean }>(`/threads/${id}/trash`, { method: 'POST' }),
+  delete: (id: string) => apiFetch<{ ok: boolean }>(`/threads/${id}`, { method: 'DELETE' }),
   restore: (id: string) => apiFetch<{ ok: boolean }>(`/threads/${id}/restore`, { method: 'POST' }),
   markRead: (id: string) => apiFetch<{ ok: boolean }>(`/threads/${id}/read`, { method: 'POST' }),
   markUnread: (id: string) => apiFetch<{ ok: boolean }>(`/threads/${id}/unread`, { method: 'POST' }),

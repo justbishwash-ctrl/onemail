@@ -201,16 +201,17 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
   const handleTrash = useCallback(async (threadId: string) => {
     setDeletingThreadIds((ids) => [...ids, threadId]);
     try {
-      await threadsApi.trash(threadId);
+      const permanentlyDelete = gmailLabel === 'TRASH';
+      await (permanentlyDelete ? threadsApi.delete(threadId) : threadsApi.trash(threadId));
       setThreads((prev) => prev.filter((thread) => thread.id !== threadId));
       threadCache.delete(cacheKey);
       if (activeThreadId === threadId) {
         setActiveThreadId(null);
         setActiveThread(null);
       }
-      addToast('Moved to trash', 'success');
+      addToast(permanentlyDelete ? 'Deleted permanently' : 'Moved to trash', 'success');
     } catch {
-      addToast('Failed to move message to trash', 'error');
+      addToast(gmailLabel === 'TRASH' ? 'Failed to permanently delete message' : 'Failed to move message to trash', 'error');
     } finally {
       setDeletingThreadIds((ids) => ids.filter((id) => id !== threadId));
     }
@@ -224,7 +225,7 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
     const deletedIds: string[] = [];
     for (const [index, id] of idsToDelete.entries()) {
       try {
-        await threadsApi.trash(id);
+        await (gmailLabel === 'TRASH' ? threadsApi.delete(id) : threadsApi.trash(id));
         deletedIds.push(id);
         setThreads((current) => current.filter((thread) => thread.id !== id));
       } catch {
@@ -238,11 +239,13 @@ export default function InboxPage({ folder = 'inbox' }: InboxPageProps) {
     setBulkDeleting(false);
     addToast(
       deletedIds.length === idsToDelete.length
-        ? `${deletedIds.length} conversations moved to trash`
+        ? gmailLabel === 'TRASH'
+          ? `${deletedIds.length} conversations deleted permanently`
+          : `${deletedIds.length} conversations moved to trash`
         : `${deletedIds.length} deleted; ${idsToDelete.length - deletedIds.length} failed`,
       deletedIds.length === idsToDelete.length ? 'success' : 'error'
     );
-  }, [cacheKey, selectedThreadIds]);
+  }, [cacheKey, gmailLabel, selectedThreadIds]);
 
   // Search submit
   const handleSearch = useCallback(async (q: string) => {
